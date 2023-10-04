@@ -41,6 +41,7 @@ django-types = "^0.18.0"
 Markdown = "^3.3.7"
 Pygments = "^2.15.1"
 factory-boy = "^3.2.1"
+black = "^23.9.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0", "setuptools"]
@@ -114,3 +115,22 @@ exclude = [
 "tests/*" = ["A003", "PLW0603", "PLR2004"]
 "examples/*" = ["A003"]
 "**/migrations/*" = ["RUF012"]
+
+[tool.black]
+target-version = ['py38', 'py39', 'py310', 'py311']
+preview = true
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | __pycached__
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''

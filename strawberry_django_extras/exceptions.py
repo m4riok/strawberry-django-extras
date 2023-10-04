@@ -1,4 +1,3 @@
-
 class JWTError(Exception):
     default_message = None
 

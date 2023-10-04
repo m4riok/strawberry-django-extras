@@ -1,20 +1,20 @@
 ---
-site_name: Asset Management
-site_description: Asset Management System
-site_author: Connect IT
-repo_name: asp
-repo_url: https://gitlab.com/m4riok/asp
+site_name: Strawberry Django Extras
+site_description: Extra functionality build on top of Strawberry Django
+site_author: Giorgos Gernas
+repo_name: strawberry-django-extras
+repo_url: https://github.com/m4riok/strawberry-django-extras
 dev_addr: 127.0.0.1:9000
 
 theme:
   name: material
   language: en
   palette:
-    - scheme: slate
-      primary: blue grey
-      accent: teal
-  logo: img/asp.png
-  favicon: img/asp.png
+    scheme: slate
+    primary: blue grey
+    accent: teal
+  logo: img/sdj-extras.png
+  favicon: img/sdj-extras.png
   features:
     - content.code.annotate
     - navigation.instant
@@ -62,4 +62,12 @@ plugins:
 
 nav:
   - index.md
+  - quickstart.md
+  - Guide:
+    - guide/jwt.md
+    - guide/validation.md
+    - guide/permissions.md
+    - guide/hooks.md
+    - guide/mutations.md
+
 
