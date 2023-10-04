@@ -13,13 +13,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.x
+          python-version: 3.10.4
       - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
+      - run: python -m pip install poetry
       - uses: actions/cache@v3
         with:
           key: mkdocs-material-${{ env.cache_id }}
           path: .cache
           restore-keys: |
             mkdocs-material-
-      - run: pip install mkdocs-material
-      - run: mkdocs gh-deploy --force
+      - run: poetry rin mkdocs build -f
+      - run: poetry run mkdocs gh-deploy --force --clean

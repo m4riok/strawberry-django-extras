@@ -11,12 +11,14 @@ Strawberry Django Extras
 - [x] Pre-save/Post-save mutation hooks
 - [x] Nested mutations support
 
+<br />
 
 # Installation
 ```bash
   pip install strawberry-django-extras
 ```
 
+<br />
 
 # Getting Started
 Dive right in to the Quickstart guide [here](./quickstart.md)
