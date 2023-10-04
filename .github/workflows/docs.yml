@@ -22,5 +22,5 @@ jobs:
           path: .cache
           restore-keys: |
             mkdocs-material-
-      - run: poetry rin mkdocs build -f
+      - run: poetry run mkdocs build -f
       - run: poetry run mkdocs gh-deploy --force --clean
