@@ -23,5 +23,4 @@ jobs:
           restore-keys: |
             mkdocs-material-
       - run: poetry install --no-root --no-interaction
-      - run: poetry run mkdocs build -f
       - run: poetry run mkdocs gh-deploy --force --clean
