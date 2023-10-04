@@ -6,7 +6,7 @@ from strawberry_django_extras.jwt.refresh_token.utils import get_refresh_token_m
 
 
 class Command(BaseCommand):
-    help = "Clears refresh tokens"
+    help = "Clears refresh tokens"  # noqa: A003
 
     def add_arguments(self, parser):
         parser.add_argument(

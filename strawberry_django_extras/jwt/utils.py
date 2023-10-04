@@ -16,7 +16,7 @@ def jwt_payload(user):
     if hasattr(username, "pk"):
         username = username.pk
 
-    exp = datetime.utcnow() + jwt_settings.JWT_EXPIRATION_DELTA
+    exp = datetime.utcnow() + jwt_settings.JWT_EXPIRATION_DELTA  # noqa: DTZ003
 
     payload = {
         user.USERNAME_FIELD: username,
@@ -24,7 +24,7 @@ def jwt_payload(user):
     }
 
     if jwt_settings.JWT_ALLOW_REFRESH:
-        payload["origIat"] = timegm(datetime.utcnow().utctimetuple())
+        payload["origIat"] = timegm(datetime.utcnow().utctimetuple())  # noqa: DTZ003
 
     if jwt_settings.JWT_AUDIENCE is not None:
         payload["aud"] = jwt_settings.JWT_AUDIENCE
@@ -63,7 +63,7 @@ def get_http_authorization(request):
     auth = request.META.get(jwt_settings.JWT_AUTH_HEADER_NAME, "").split()
     prefix = jwt_settings.JWT_AUTH_HEADER_PREFIX
 
-    if len(auth) != 2 or auth[0].lower() != prefix.lower():
+    if len(auth) != 2 or auth[0].lower() != prefix.lower():  # noqa: PLR2004
         return None
     return auth[1]
 
@@ -72,15 +72,16 @@ def get_credentials(request):
     return get_http_authorization(request)
 
 
+# noinspection PyUnusedLocal
 def get_payload(token, context=None):
     try:
         payload = jwt_settings.JWT_DECODE_HANDLER(token)
-    except jwt.ExpiredSignatureError:
-        raise JSONWebTokenExpired()
-    except jwt.DecodeError:
-        raise JSONWebTokenError(_("Error decoding signature"))
-    except jwt.InvalidTokenError:
-        raise JSONWebTokenError(_("Invalid token"))
+    except jwt.ExpiredSignatureError as e:
+        raise JSONWebTokenExpired from e
+    except jwt.DecodeError as e:
+        raise JSONWebTokenError(_("Error decoding signature")) from e
+    except jwt.InvalidTokenError as e:
+        raise JSONWebTokenError(_("Invalid token")) from e
     return payload
 
 
@@ -107,7 +108,7 @@ def get_user_by_payload(payload):
 
 def refresh_has_expired(orig_iat):
     exp = orig_iat + jwt_settings.JWT_REFRESH_EXPIRATION_DELTA.total_seconds()
-    return timegm(datetime.utcnow().utctimetuple()) > exp
+    return timegm(datetime.utcnow().utctimetuple()) > exp  # noqa: DTZ003
 
 
 def is_async() -> bool:

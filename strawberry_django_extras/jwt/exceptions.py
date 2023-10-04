@@ -11,9 +11,9 @@ class JSONWebTokenError(Exception):
         super().__init__(message)
 
 
-class PermissionDenied(JSONWebTokenError):
+class PermissionDenied(JSONWebTokenError):  # noqa: N818
     default_message = _("You do not have permission to perform this action")
 
 
-class JSONWebTokenExpired(JSONWebTokenError):
+class JSONWebTokenExpired(JSONWebTokenError):  # noqa: N818
     default_message = _("Signature has expired")

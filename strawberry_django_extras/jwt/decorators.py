@@ -18,7 +18,7 @@ def sync_or_async(func):
         if inspect.iscoroutinefunction(func):
             return func
         return sync_to_async(func)
-    else:
-        if inspect.iscoroutinefunction(func):
-            return async_to_sync(func)
-        return func
+
+    if inspect.iscoroutinefunction(func):
+        return async_to_sync(func)
+    return func

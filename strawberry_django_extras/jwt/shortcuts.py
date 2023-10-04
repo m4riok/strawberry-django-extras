@@ -1,4 +1,3 @@
-# from .refresh_token.shortcuts import create_refresh_token, get_refresh_token
 from .settings import jwt_settings
 from .utils import get_payload, get_user_by_payload
 

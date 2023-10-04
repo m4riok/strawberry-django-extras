@@ -1,7 +1,7 @@
-from typing import Generic, Optional, List, TypeVar, Union
+from typing import Generic, List, Optional, TypeVar, Union
 
 import strawberry
-from strawberry import UNSET, ID
+from strawberry import ID, UNSET
 from strawberry.scalars import JSON
 
 T_CREATE = TypeVar("T_CREATE")
@@ -16,7 +16,7 @@ class CRUDInput:
 @strawberry.input(name="CRUDRemoveInput",
                   description="Provides the ability to remove a related object with an optional boolean delete to delete the object after the fKey is assigned")
 class CRUDRemoveInput:
-    id: ID
+    id: ID  # noqa: A003
     delete: Optional[bool] = False
 
 
@@ -37,7 +37,7 @@ class CRUDManyToManyItemUpdate(Generic[T_UPDATE]):
 @strawberry.input(name="CRUDManyToManyID",
                   description="Provides through defaults and object IDs to be assigned separately for ManyToMany relationships")
 class CRUDManyToManyID:
-    id: ID
+    id: ID  # noqa: A003
     through_defaults: Optional[JSON] = UNSET
 
 

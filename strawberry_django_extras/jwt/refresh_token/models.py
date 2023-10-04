@@ -1,18 +1,19 @@
 import binascii
-from calendar import timegm
 import os
+from calendar import timegm
 
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from strawberry_django_extras.jwt.refresh_token import signals, managers
+from strawberry_django_extras.jwt.refresh_token import managers, signals
 from strawberry_django_extras.jwt.settings import jwt_settings
 
 
+# noinspection PyUnusedLocal
 class AbstractRefreshToken(models.Model):
-    id = models.BigAutoField(primary_key=True)
+    id = models.BigAutoField(primary_key=True)  # noqa: A003
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -50,6 +51,7 @@ class AbstractRefreshToken(models.Model):
             return self._cached_token
         return self.token
 
+    # noinspection PyUnusedLocal
     def is_expired(self, request=None):
         orig_iat = timegm(self.created.utctimetuple())
         return jwt_settings.JWT_REFRESH_EXPIRED_HANDLER(orig_iat)

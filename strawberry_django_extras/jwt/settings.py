@@ -59,8 +59,8 @@ def import_from_string(value, setting_name):
     try:
         return import_string(value)
     except ImportError as e:
-        msg = f"Could not import `{value}` for JWT setting `{setting_name}`." f"{e.__class__.__name__}: {e}."
-        raise ImportError(msg)
+        msg = f"Could not import `{value}` for JWT setting `{setting_name}`.{e.__class__.__name__}: {e}."
+        raise ImportError(msg) from e
 
 
 class JWTSettings:
@@ -76,9 +76,7 @@ class JWTSettings:
         value = self.user_settings.get(attr, self.defaults[attr])
 
         if attr == "JWT_ALLOW_ANY_CLASSES":
-            value = list(value) + [
-                "strawberry_django_jwt.mixins.JSONWebTokenMixin",
-            ]
+            value = [*list(value), "strawberry_django_jwt.mixins.JSONWebTokenMixin"]
 
         if attr in self.import_strings:
             value = perform_import(value, attr)
@@ -103,6 +101,7 @@ class JWTSettings:
             delattr(self, "_user_settings")
 
 
+# noinspection PyUnusedLocal
 def reload_settings(*args, **kwargs):
     setting = kwargs["setting"]
 

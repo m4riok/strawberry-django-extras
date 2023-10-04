@@ -8,7 +8,6 @@ from strawberry_django_extras.jwt.utils import get_http_authorization
 
 class JWTBackend(BaseBackend):
     def authenticate(self, request, token=None):
-        # check if token is in request and if it is try getting user or raise exception
 
         token = get_http_authorization(request)
         if token is not None:

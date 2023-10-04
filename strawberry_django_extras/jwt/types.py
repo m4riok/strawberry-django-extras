@@ -14,7 +14,7 @@ class RefreshedTokenType:
 @strawberry.type
 class TokenType:
     token: str
-    refreshToken: Optional[RefreshedTokenType] = UNSET
+    refresh_token: Optional[RefreshedTokenType] = UNSET
 
 
 @strawberry.type
