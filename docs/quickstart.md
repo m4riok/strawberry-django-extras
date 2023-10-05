@@ -235,7 +235,7 @@ It makes sense for the inputs to be different when updating an object vs creatin
 It also makes sense that the api provided would be different depending on the type of relationship between the related models. Brief explanations of each 
 input wrapper is provided below. For details refer to relevant guide on [nested mutations](./guide/mutations.md).
 
-### Wrappers for nested objects on creation
+### Wrappers for nested objects for create mutations
 
 #### One to One
 `CRUDOneToOneCreateInput` can be used when you want to create or assign a related object, alongside the creation of your root object. The resulting schema will provide two actions
@@ -421,6 +421,81 @@ For examples please refer to the relevant guide on [nested mutations](./guide/mu
     Please note that the inputs for the nested objects need not be the same as the inputs for the creation of the objects. In fact you have the flexibility
     to define different inputs for the nested objects limiting which fields are exposed through each nested mutation. 
 
-### Wrappers for nested objects on update
+### Wrappers for nested objects for update mutations
 These wrappers expect two inputs to be provided instead of the one that was necessary for creation. The first is for creation of new related objects when updating the current 
 object and the second is for updates to the data of already related objects.
+
+#### One to One
+`CRUDOneToOneUpdateInput` can be used when alongside an update mutation you want to update related objects. The resulting schema will provide three possible actions for your 
+mutation and a boolean flag. 
+
+- `create` of type `UserInput` used to create a new related object.
+- `assign` of type `ID` used to assign an existing objects as related.
+  > Note that you can use `null` to remove the relationship if the field is nullable.
+- `update` of type `UserPartial` used to update the fields of an existing related object.
+- `delete` of type `bool` indicating whether the related object should be deleted.
+  > Note that this flag can be used together with assign or create to delete the previously related object.
+
+The respective update input of the example used for the One to One creation mutation above would read:
+```python
+@strawberry_django.partial(Goat)
+class GoatPartial:
+    id: ID
+    name: auto
+    user: Optional[CRUDOneToOneUpdateInput['UserInput','UserPartial']] = UNSET
+
+@strawberry_django.partial(get_user_model())
+class UserPartial:
+    id: ID
+    firstname: auto
+    lastname: auto
+    ...
+    goat: Optional[CRUDOneToOneUpdateInput[GoatInput, GoatPartial]] = UNSET
+```
+
+!!! note
+    Currently when using `@strawberry_django.partial` all fields are marked as optional when auto is used. However, the ID is required for performing nested updates. For
+    consistency and to avoid any errors you should always use `id: ID` when defining partials for update mutations when it is the root object. The `id` can be omitted
+    when the partial is used as a nested input and if defined it won't be used in any way to update the related object.
+
+#### One to Many
+`CRUDOneToManyUpdateInput` can be used when alongside an update mutation you want to update related objects. The resulting schema will provide three possible actions for
+your mutation and a boolean flag. These are the same as the ones provided by the One to One wrapper, and they function in exactly the same fashion. For examples please
+refer to the relevant guide on [nested mutations](./guide/mutations.md).
+
+For a more detailed explanation with examples please refer to the relevant guide on [nested mutations](./guide/mutations.md).
+
+#### Many to One
+`CRUDManyToOneUpdateInput` can be used when alongside an update mutation you want to update related objects. The resulting schema will provide __four__ possible actions 
+for your mutation. These are as follows:
+
+- `create` of type `List[UserInput]` used to create new related objects.
+- `assign` of type `List[ID]` used to assign relations with existing objects.
+- `update` of type `List[UserPartial]` used to update the fields of existing related objects.
+- `remove` of type `List[CRUDRemoveInput]` which wraps an `ID` and a `bool` flag indicating whether the removed object should be deleted. 
+
+!!! note
+    Please note that the `UserPartial` used in the example above unlike the case with One to Many and One to One has a requirement for the `id` field. Please take care
+    to ensure the `id` is declared as mandatory when declaring your input class.
+
+For a more detailed explanation with examples please refer to the relevant guide on [nested mutations](./guide/mutations.md).
+
+#### Many to Many
+`CRUDManyToManyUpdateInput` can be used when alongside an update mutation you want to update related objects. The resulting schema will provide __four__ possible actions
+for your mutation. These are as follows:
+
+- `create` of type `List[CRUDManyToManyItem]` which wraps two inputs.
+    - `objectData` of type `UserInput` used for the fields of the related object.
+    - `throughDefaults` of type `JSON` used for any data stored in the `through` model if one exists.
+- `assign` of type `List[CRUDManyToManyID]` which wraps two inputs.
+    - `id` of type `ID` used to assign relations with existing objects.
+    - `throughDefaults` of type `JSON` used for any data stored in the `through` model if one exists.
+- `update` of type `List[CRUDManyToManyItemUpdate]` which wraps two inputs.
+    - `objectData` of type `UserPartial` used to update the fields of the related object.
+    - `throughDefaults` of type `JSON` used to update the fields of the `through` model if one exists.
+- `remove` of type `List[CRUDRemoveInput]` which wraps an `ID` and a `bool` flag indicating whether the removed object should be deleted.
+
+!!! note
+    Please note that again the `UserPartial` input must declare an `id` field of type `ID` and __not__ `auto`. 
+
+For a more detailed explanation with examples please refer to the relevant guide on [nested mutations](./guide/mutations.md).
