@@ -22,3 +22,10 @@ Strawberry Django Extras
 
 # Getting Started
 Dive right in to the Quickstart guide [here](./quickstart.md)
+
+<br />
+
+# A note on Relay
+Relay is not currently supported by this package. Some features might work with relay and
+others might not. At the moment there are no plans to support Relay. If you are a relay user
+and do test this package, please do provide feedback on what works and what doesn't.
