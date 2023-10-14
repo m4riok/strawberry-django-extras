@@ -1,4 +1,5 @@
-## Permissions
+# Permissions
+
 Similarly to validations, permission checking is run on input instantiation. Since strawberry does not currently provide a way to pass `permission_classes` to input fields
 this package allows you to write your permission checking functions as part of the input class. 
 

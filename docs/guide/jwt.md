@@ -1,3 +1,5 @@
+# JWT Authentication
+
 For installation and basic configuration instructions please refer to the [quick start guide](../quickstart.md).
 
 ## Settings
@@ -9,7 +11,7 @@ GRAPHQL_JWT = {
     'JWT_ALGORITHM': 'EdDSA',
     'JWT_VERIFY_EXPIRATION': True,
     'JWT_LONG_RUNNING_REFRESH_TOKEN': True,
-    'JWT_EXPIRATION_DELTA': datetime.timedelta(minutes=5)
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(minutes=5),
     'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(days=7),
     'JWT_AUTHENTICATE_INTROSPECTION': True,
     'JWT_REFRESH_TOKEN_N_BYTES': 64,

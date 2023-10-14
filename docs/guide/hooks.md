@@ -1,4 +1,5 @@
-## Mutation Hooks
+# Mutation Hooks
+
 Mutation  hooks are provided via a `field_extension` and can be applied to any strawberry mutation. 
 ```{.python title="hooks.py"}
 def update_user_pre(info: Info, mutation_input: UserUpdateInput):

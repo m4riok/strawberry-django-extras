@@ -1,4 +1,5 @@
-## Input Validations
+# Input Validations
+
 Much inspired by the way [graphene-django-cud](https://github.com/tOgg1/graphene-django-cud){:target="_blank"} handles validation, this package provides
 a similar way to validate your input when the respective input classes are instantiated. 
 
