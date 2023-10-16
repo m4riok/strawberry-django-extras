@@ -69,6 +69,7 @@ nav:
     - guide/permissions.md
     - guide/hooks.md
     - guide/mutations.md
+    - guide/pagination.md
   - community-projects.md
 
 

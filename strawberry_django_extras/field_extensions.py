@@ -9,6 +9,7 @@ from strawberry_django.optimizer import DjangoOptimizerExtension
 from .decorators import sync_or_async
 from .functions import check_permissions, kill_a_rabbit, perform_validation, rabbit_hole
 from .inputs import CRUDInput
+from .types import PaginatedList
 
 if TYPE_CHECKING:
     from strawberry.types import Info
@@ -137,3 +138,41 @@ class Relationships(FieldExtension):
         with await sync_to_async(DjangoOptimizerExtension.disabled)():
             return await sync_to_async(kill_a_rabbit)(rel, None, False, is_root=True, next_=next_, source=source,
                                                       info=info, ni=mutation_input)
+
+
+# noinspection PyPropertyAccess
+class TotalCountPaginationExtension(FieldExtension):
+
+    django_model = None
+
+    def apply(self, field: StrawberryDjangoField) -> None:
+        # Resolve these now before changing the type
+        field.is_list = field.is_list
+        field.django_model = field.django_model
+        field.django_type = field.django_type
+
+        self.django_model = field.django_model
+
+        # Now change the type
+        field.type = PaginatedList[field.type]
+
+    @sync_or_async
+    def get_total_count(self) -> int:
+        return self.django_model.objects.count()
+
+    def resolve(self, next_, source, info, **kwargs):
+        result = next_(source, info, **kwargs)
+
+        return PaginatedList(results=result, total_count=self.get_total_count())
+
+    async def resolve_async(
+        self,
+        next_: Callable[..., Awaitable[Any]],
+        source: Any,
+        info: Info,
+        **kwargs: Any,
+    ) -> Any:
+        result = await next_(source, info, **kwargs)
+        return PaginatedList(results=result, total_count=self.get_total_count())
+
+

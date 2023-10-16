@@ -1,5 +1,11 @@
 from .decorators import sync_or_async
-from .field_extensions import MutationHooks, Permissions, Relationships, Validators
+from .field_extensions import (
+    MutationHooks,
+    Permissions,
+    Relationships,
+    TotalCountPaginationExtension,
+    Validators,
+)
 from .inputs import (
     CRUDInput,
     CRUDManyToManyCreateInput,
@@ -19,6 +25,7 @@ __all__ = [
     "with_validation",
     "with_cud_relationships",
     "with_permissions",
+    "with_total_count",
     "CRUDInput",
     "CRUDManyToOneCreateInput",
     "CRUDManyToOneUpdateInput",
@@ -54,3 +61,7 @@ def with_permissions():
 
 def with_cud_relationships():
     return Relationships()
+
+
+def with_total_count():
+    return TotalCountPaginationExtension()
