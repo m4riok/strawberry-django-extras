@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Awaitable, Callable
 
+import strawberry_django
 from asgiref.sync import sync_to_async
 from strawberry.extensions import FieldExtension
 from strawberry_django.optimizer import DjangoOptimizerExtension
@@ -19,10 +20,14 @@ if TYPE_CHECKING:
 
 # noinspection PyUnresolvedReferences
 class MutationHooks(FieldExtension):
-
     # noinspection PyUnresolvedReferences
-    def __init__(self, pre: Callable | None = None, post: Callable | None = None, pre_async: Callable | None = None,
-                 post_async: Callable | None = None):
+    def __init__(
+        self,
+        pre: Callable | None = None,
+        post: Callable | None = None,
+        pre_async: Callable | None = None,
+        post_async: Callable | None = None,
+    ):
         self.pre = pre
         self.post = post
         self.pre_async = pre_async
@@ -39,9 +44,12 @@ class MutationHooks(FieldExtension):
         return result
 
     async def resolve_async(
-            self, next_: Callable[..., Awaitable[Any]], source: Any, info: Info, **kwargs: Any,
+        self,
+        next_: Callable[..., Awaitable[Any]],
+        source: Any,
+        info: Info,
+        **kwargs: Any,
     ) -> Any:
-
         if self.pre_async:
             await self.pre_async(info, kwargs.get("data", None))
         elif self.pre:
@@ -59,8 +67,8 @@ class MutationHooks(FieldExtension):
 
 class Validators(FieldExtension):
     def __init__(
-            self,
-            **kwargs,
+        self,
+        **kwargs,
     ):
         super().__init__(**kwargs)
 
@@ -70,7 +78,11 @@ class Validators(FieldExtension):
         return next_(source, info, **kwargs)
 
     async def resolve_async(
-            self, next_: Callable[..., Awaitable[Any]], source: Any, info: Info, **kwargs: Any,
+        self,
+        next_: Callable[..., Awaitable[Any]],
+        source: Any,
+        info: Info,
+        **kwargs: Any,
     ) -> Any:
         mutation_input = kwargs.get("data", None)
         await sync_to_async(perform_validation)(mutation_input, info)
@@ -79,8 +91,8 @@ class Validators(FieldExtension):
 
 class Permissions(FieldExtension):
     def __init__(
-            self,
-            **kwargs,
+        self,
+        **kwargs,
     ):
         super().__init__(**kwargs)
 
@@ -90,7 +102,11 @@ class Permissions(FieldExtension):
         return next_(source, info, **kwargs)
 
     async def resolve_async(
-            self, next_: Callable[..., Awaitable[Any]], source: Any, info: Info, **kwargs: Any,
+        self,
+        next_: Callable[..., Awaitable[Any]],
+        source: Any,
+        info: Info,
+        **kwargs: Any,
     ) -> Any:
         mutation_input = kwargs.get("data", None)
         await sync_to_async(check_permissions)(mutation_input, info)
@@ -101,8 +117,8 @@ class Relationships(FieldExtension):
     root_field: StrawberryDjangoFieldBase = None
 
     def __init__(
-            self,
-            **kwargs,
+        self,
+        **kwargs,
     ):
         super().__init__(**kwargs)
 
@@ -110,7 +126,6 @@ class Relationships(FieldExtension):
         self.root_field = field
 
     def resolve(self, next_, source, info, **kwargs):
-
         mutation_input = kwargs.get("data", None)
         model = self.root_field.django_model
         rel = {}
@@ -120,13 +135,24 @@ class Relationships(FieldExtension):
                 delattr(mutation_input, k)
 
         with DjangoOptimizerExtension.disabled():
-            return kill_a_rabbit(rel, None, False, is_root=True, next_=next_, source=source, info=info,
-                                 ni=mutation_input)
+            return kill_a_rabbit(
+                rel,
+                None,
+                False,
+                is_root=True,
+                next_=next_,
+                source=source,
+                info=info,
+                ni=mutation_input,
+            )
 
     async def resolve_async(
-            self, next_: Callable[..., Awaitable[Any]], source: Any, info: Info, **kwargs: Any,
+        self,
+        next_: Callable[..., Awaitable[Any]],
+        source: Any,
+        info: Info,
+        **kwargs: Any,
     ) -> Any:
-
         mutation_input = kwargs.get("data", None)
         model = self.root_field.django_model
         rel = {}
@@ -136,13 +162,20 @@ class Relationships(FieldExtension):
                 delattr(mutation_input, k)
 
         with await sync_to_async(DjangoOptimizerExtension.disabled)():
-            return await sync_to_async(kill_a_rabbit)(rel, None, False, is_root=True, next_=next_, source=source,
-                                                      info=info, ni=mutation_input)
+            return await sync_to_async(kill_a_rabbit)(
+                rel,
+                None,
+                False,
+                is_root=True,
+                next_=next_,
+                source=source,
+                info=info,
+                ni=mutation_input,
+            )
 
 
 # noinspection PyPropertyAccess
 class TotalCountPaginationExtension(FieldExtension):
-
     django_model = None
 
     def apply(self, field: StrawberryDjangoField) -> None:
@@ -157,13 +190,21 @@ class TotalCountPaginationExtension(FieldExtension):
         field.type = PaginatedList[field.type]
 
     @sync_or_async
-    def get_total_count(self) -> int:
+    def get_total_count(self, info: Info, filters=None) -> int:
+        if filters is not None:
+            return strawberry_django.filters.apply(
+                filters, self.django_model.objects.all(), info,
+            ).count()
         return self.django_model.objects.count()
 
     def resolve(self, next_, source, info, **kwargs):
         result = next_(source, info, **kwargs)
-
-        return PaginatedList(results=result, total_count=self.get_total_count())
+        return PaginatedList(
+            results=result,
+            total_count=self.get_total_count(
+                filters=kwargs.get("filters", None), info=info,
+            ),
+        )
 
     async def resolve_async(
         self,
@@ -173,6 +214,9 @@ class TotalCountPaginationExtension(FieldExtension):
         **kwargs: Any,
     ) -> Any:
         result = await next_(source, info, **kwargs)
-        return PaginatedList(results=result, total_count=self.get_total_count())
-
-
+        return PaginatedList(
+            results=result,
+            total_count=self.get_total_count(
+                filters=kwargs.get("filters", None), info=info,
+            ),
+        )

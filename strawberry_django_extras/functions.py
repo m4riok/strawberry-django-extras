@@ -93,7 +93,7 @@ def kill_a_rabbit(  # noqa: PLR0912, PLR0913, PLR0915
                         **{
                             manager.source_field_name: data.get("p_obj"),
                             manager.target_field_name: obj,
-                        }
+                        },
                     )
                     for k, v in data.get("through_defaults", {}).items():
                         setattr(im, k, v)
@@ -154,18 +154,18 @@ def kill_a_rabbit(  # noqa: PLR0912, PLR0913, PLR0915
                 deletion.get("manager").filter(pk__in=deletion.get("pks")).delete()
             else:
                 deletion.get("model").objects.filter(
-                    pk__in=deletion.get("pks")
+                    pk__in=deletion.get("pks"),
                 ).delete()
 
     if data.get("removals"):
         for removal in data.get("removals"):
             if data.get("manager", None) is not None:
                 removal.get("manager").filter(pk__in=removal.get("pks")).update(
-                    **{removal.get("rel_data_id"): None}
+                    **{removal.get("rel_data_id"): None},
                 )
             else:
                 removal.get("model").objects.filter(pk__in=removal.get("pks")).update(
-                    **{removal.get("rel_data_id"): None}
+                    **{removal.get("rel_data_id"): None},
                 )
 
     if is_root:
@@ -173,6 +173,7 @@ def kill_a_rabbit(  # noqa: PLR0912, PLR0913, PLR0915
     return None
 
 
+# noinspection DuplicatedCode
 def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PLR0915
     if (
         hasattr(_input, "__strawberry_definition__")
@@ -197,7 +198,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                 "deletions": [],
                 "set_manager": False,
                 "through_defaults": through_defaults,
-            }
+            },
         )
         for key, val in fields.items():
             if isinstance(val, (OneToOneField, OneToOneRel)):
@@ -211,15 +212,15 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                         and _rel_input.assign is not UNSET
                     ):
                         raise SDJExtrasError(
-                            "Cannot create and assign at the same time"
+                            "Cannot create and assign at the same time",
                         )
                     if _rel_input.assign is not UNSET:
                         rel.get("data").update(
                             {
                                 key: val.related_model.objects.get(
-                                    pk=int(_rel_input.assign)
-                                )
-                            }
+                                    pk=int(_rel_input.assign),
+                                ),
+                            },
                         )
                     if _rel_input.create is not UNSET:
                         rel[when].append(
@@ -227,7 +228,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                 "data_id": key,
                                 "operation": "create",
                                 "rel_data_id": val.remote_field.name,
-                            }
+                            },
                         )
                         rabbit_hole(
                             val.related_model,
@@ -248,14 +249,14 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                     ):
                         raise SDJExtrasError(
                             "You can either create a new object or assign an existing"
-                            " one but not both at the same time"
+                            " one but not both at the same time",
                         )
                     if _rel_input.update is not UNSET and (
                         _rel_input.assign is not UNSET or _rel_input.create is not UNSET
                     ):
                         raise SDJExtrasError(
                             "Updating an object is only supported without"
-                            " create/assign."
+                            " create/assign.",
                         )
                     if _rel_input.assign is not UNSET:
                         if isinstance(val, OneToOneRel):
@@ -268,7 +269,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                         f"There is a {key} already assigned to this"
                                         f" {val.remote_field.name} and the field is not"
                                         " nullable. Maybe specify delete to replace"
-                                        f" the {key} ?"
+                                        f" the {key} ?",
                                     )
                             else:  # noqa: PLR5501
                                 if (
@@ -285,34 +286,34 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                                         val.remote_field.name
                                                     ),
                                                     "pks": [existing_instance.pk],
-                                                }
+                                                },
                                             ],
-                                        }
+                                        },
                                     )
 
                             if _rel_input.assign is not None:
                                 rel.get("data").update(
                                     {
                                         key: val.related_model.objects.get(
-                                            pk=_rel_input.assign
-                                        )
-                                    }
+                                            pk=_rel_input.assign,
+                                        ),
+                                    },
                                 )
 
                         elif isinstance(val, OneToOneField):
                             if _rel_input.assign is None:
                                 if val.null is False:
                                     raise SDJExtrasError(
-                                        "Cannot assign null to non nullable field"
+                                        "Cannot assign null to non nullable field",
                                     )
                                 rel.get("data").update({key: None})
                             else:
                                 rel.get("data").update(
                                     {
                                         key: val.related_model.objects.get(
-                                            pk=_rel_input.assign
-                                        )
-                                    }
+                                            pk=_rel_input.assign,
+                                        ),
+                                    },
                                 )
 
                         else:
@@ -327,7 +328,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                 raise SDJExtrasError(
                                     f"There is a {key} already assigned to this"
                                     f" {val.remote_field.name}. Maybe specify delete to"
-                                    f" replace the {key} ?"
+                                    f" replace the {key} ?",
                                 )
                             else:  # noqa: RET506
                                 rel["before"].append(
@@ -338,9 +339,9 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                                 "model": val.related_model,
                                                 "rel_data_id": val.remote_field.name,
                                                 "pks": [existing_instance.pk],
-                                            }
+                                            },
                                         ],
-                                    }
+                                    },
                                 )
 
                         rel[when].append(
@@ -348,7 +349,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                 "data_id": key,
                                 "operation": "create",
                                 "rel_data_id": val.remote_field.name,
-                            }
+                            },
                         )
                         rabbit_hole(
                             val.related_model,
@@ -364,7 +365,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                 "data_id": key,
                                 "operation": "update",
                                 "pk": existing_instance.pk,
-                            }
+                            },
                         )
                         rabbit_hole(
                             val.related_model,
@@ -381,7 +382,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                 raise SDJExtrasError(
                                     "Deleting the child object when CASCADE has been"
                                     " set makes ZERO sense. Maybe delete the parent"
-                                    " object instead ?"
+                                    " object instead ?",
                                 )
                             rel["after"].append(
                                 {
@@ -389,10 +390,10 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                         {
                                             "model": val.related_model,
                                             "pks": [existing_instance.pk],
-                                        }
+                                        },
                                     ],
                                     "operation": "skip",
-                                }
+                                },
                             )
                         elif isinstance(val, OneToOneRel):
                             rel["before"].append(
@@ -401,10 +402,10 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                         {
                                             "model": val.related_model,
                                             "pks": [existing_instance.pk],
-                                        }
+                                        },
                                     ],
                                     "operation": "skip",
-                                }
+                                },
                             )
 
             if isinstance(val, ForeignKey):
@@ -415,13 +416,13 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                         and _rel_input.assign is not UNSET
                     ):
                         raise SDJExtrasError(
-                            "Cannot create and assign at the same time"
+                            "Cannot create and assign at the same time",
                         )
                     if _rel_input.create is UNSET and _rel_input.assign is UNSET:
                         raise SDJExtrasError("Must create or assign")
                     if _rel_input.assign is not UNSET:
                         rel.get("data").update(
-                            {key: val.related_model.objects.get(pk=_rel_input.assign)}
+                            {key: val.related_model.objects.get(pk=_rel_input.assign)},
                         )
                     if _rel_input.create is not UNSET:
                         rel["before"].append({"data_id": key, "operation": "create"})
@@ -438,29 +439,29 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                     ):
                         raise SDJExtrasError(
                             "You can either create a new object or assign an existing"
-                            " one but not both at the same time"
+                            " one but not both at the same time",
                         )
                     if _rel_input.update is not UNSET and (
                         _rel_input.assign is not UNSET or _rel_input.create is not UNSET
                     ):
                         raise SDJExtrasError(
                             "Updating an object is only supported without"
-                            " create/assign."
+                            " create/assign.",
                         )
                     if _rel_input.assign is not UNSET:
                         if _rel_input.assign is None:
                             if val.null is False:
                                 raise SDJExtrasError(
-                                    "Cannot assign null to non nullable field"
+                                    "Cannot assign null to non nullable field",
                                 )
                             rel.get("data").update({key: None})
                         else:
                             rel.get("data").update(
                                 {
                                     key: val.related_model.objects.get(
-                                        pk=_rel_input.assign
-                                    )
-                                }
+                                        pk=_rel_input.assign,
+                                    ),
+                                },
                             )
                     if _rel_input.create is not UNSET:
                         rel["before"].append({"data_id": key, "operation": "create"})
@@ -471,15 +472,15 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                         )
                     if _rel_input.update is not UNSET:
                         rel_obj = getattr(
-                            val.model.objects.get(pk=int(_input.id)), val.name
+                            val.model.objects.get(pk=int(_input.id)), val.name,
                         )
                         if rel_obj is None:
                             raise SDJExtrasError(
-                                "Cannot update non existing object for key %s" % key
+                                "Cannot update non existing object for key %s" % key,
                             )
                         _rel_input.update.id = rel_obj.pk
                         rel["before"].append(
-                            {"data_id": key, "operation": "update", "pk": rel_obj.pk}
+                            {"data_id": key, "operation": "update", "pk": rel_obj.pk},
                         )
                         rabbit_hole(
                             val.related_model,
@@ -491,7 +492,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                             raise SDJExtrasError(
                                 "Cannot delete remote object without assigning or"
                                 " creating a new one. If the relationship is nullable"
-                                " you can assign null to unset the relationship"
+                                " you can assign null to unset the relationship",
                             )
                         if (
                             not hasattr(_input, "id")
@@ -500,13 +501,13 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                         ):
                             raise SDJExtrasError(
                                 "Cannot locate remote object to delete without id and"
-                                " the parent update input had no id field provided."
+                                " the parent update input had no id field provided.",
                             )
                         rel_obj = getattr(
-                            val.model.objects.get(pk=int(_input.id)), val.name
+                            val.model.objects.get(pk=int(_input.id)), val.name,
                         )
                         rel["deletions"].append(
-                            {"model": val.related_model, "pks": [rel_obj.pk]}
+                            {"model": val.related_model, "pks": [rel_obj.pk]},
                         )
 
             elif isinstance(val, ManyToOneRel):
@@ -516,15 +517,15 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                         raise SDJExtrasError("Must create or assign or both")
                     if _rel_input.assign is not UNSET:
                         rel_objs = val.related_model.objects.filter(
-                            pk__in=[int(pk) for pk in _rel_input.assign]
+                            pk__in=[int(pk) for pk in _rel_input.assign],
                         )
                         if rel_objs.count() != len(_rel_input.assign):
                             raise SDJExtrasError(
                                 "Not all assigned objects found for %s"
-                                % val.related_model.__name__
+                                % val.related_model.__name__,
                             )
                         rel["assignments"].append(
-                            {"assignment_id": val.remote_field.name, "objs": rel_objs}
+                            {"assignment_id": val.remote_field.name, "objs": rel_objs},
                         )
                     if _rel_input.create is not UNSET:
                         for item in _input.__dict__.get(key).create:
@@ -533,22 +534,22 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                     "data_id": key,
                                     "rel_data_id": val.remote_field.name,
                                     "operation": "create",
-                                }
+                                },
                             )
                             rabbit_hole(val.related_model, item, rel["after"][-1])
 
                 elif isinstance(_rel_input, CRUDManyToOneUpdateInput):
                     if _rel_input.assign is not UNSET:
                         rel_objs = val.related_model.objects.filter(
-                            pk__in=[int(pk) for pk in _rel_input.assign]
+                            pk__in=[int(pk) for pk in _rel_input.assign],
                         )
                         if rel_objs.count() != len(_rel_input.assign):
                             raise SDJExtrasError(
                                 "Not all assigned objects found for %s"
-                                % val.related_model.__name__
+                                % val.related_model.__name__,
                             )
                         rel["assignments"].append(
-                            {"assignment_id": val.remote_field.name, "objs": rel_objs}
+                            {"assignment_id": val.remote_field.name, "objs": rel_objs},
                         )
                     if _rel_input.create is not UNSET:
                         for item in _input.__dict__.get(key).create:
@@ -557,7 +558,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                     "data_id": key,
                                     "rel_data_id": val.remote_field.name,
                                     "operation": "create",
-                                }
+                                },
                             )
                             rabbit_hole(val.related_model, item, rel["after"][-1])
                     if _rel_input.update is not UNSET:
@@ -573,7 +574,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                     "operation": "update",
                                     "pk": item.id,
                                     "manager": manager,
-                                }
+                                },
                             )
                             rabbit_hole(val.related_model, item, rel["after"][-1])
                     if _rel_input.remove is not UNSET:
@@ -590,7 +591,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                         if len(rem_pks) > 0 and val.remote_field.null is not True:
                             raise SDJExtrasError(
                                 "Cannot remove remote objects from non nullable field"
-                                f" ( rel: {key} , model: {val.related_model.__name__})"
+                                f" ( rel: {key} , model: {val.related_model.__name__})",
                             )
                         manager = getattr(
                             val.model.objects.get(pk=int(_input.id)),
@@ -602,7 +603,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                     "model": val.related_model,
                                     "pks": del_pks,
                                     "manager": manager,
-                                }
+                                },
                             )
                         if len(rem_pks) > 0:
                             rel["removals"].append(
@@ -611,7 +612,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                     "rel_data_id": val.remote_field.name,
                                     "pks": rem_pks,
                                     "manager": manager,
-                                }
+                                },
                             )
 
             elif isinstance(val, (ManyToManyField, ManyToManyRel)):
@@ -624,7 +625,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                     else:
                         raise SDJExtrasError(
                             "Unable to determine manager for %s"
-                            % val.__class__.__name__
+                            % val.__class__.__name__,
                         )
                     if _rel_input.create is UNSET and _rel_input.assign is UNSET:
                         raise SDJExtrasError("Must create or assign or both")
@@ -636,7 +637,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                     "operation": "create",
                                     "accessor": rel_name,
                                     "m2m": True,
-                                }
+                                },
                             )
                             rel.update({"set_manager": True})
                             rabbit_hole(
@@ -654,7 +655,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                     "accessor": rel_name,
                                     "m2m": True,
                                     "data": item,
-                                }
+                                },
                             )
                             rel.update({"set_manager": True})
                             rabbit_hole(
@@ -672,7 +673,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                     else:
                         raise SDJExtrasError(
                             "Unable to determine manager for %s"
-                            % val.__class__.__name__
+                            % val.__class__.__name__,
                         )
                     p_obj = val.model.objects.get(pk=int(_input.id))
                     manager = getattr(p_obj, rel_name)
@@ -685,7 +686,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                     "accessor": rel_name,
                                     "manager": manager,
                                     "m2m": True,
-                                }
+                                },
                             )
 
                             rabbit_hole(
@@ -704,7 +705,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                     "manager": manager,
                                     "m2m": True,
                                     "data": item,
-                                }
+                                },
                             )
                             rabbit_hole(
                                 val.related_model,
@@ -722,7 +723,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                     "manager": manager,
                                     "m2m": True,
                                     "p_obj": p_obj,
-                                }
+                                },
                             )
 
                             rabbit_hole(
@@ -741,13 +742,14 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                     "manager": manager,
                                     "m2m": True,
                                     "data": item.__dict__,
-                                }
+                                },
                             )
 
             else:
                 rel["data"].update({key: _input.__dict__.get(key)})
 
 
+# noinspection DuplicatedCode
 def perform_validation(_input, info):
     if isinstance(_input, List):
         for item in _input:
@@ -781,6 +783,7 @@ def perform_validation(_input, info):
                 getattr(_input, f"validate_{to_camel_case(key)}")(info, val)
 
 
+# noinspection DuplicatedCode
 def check_permissions(_input, info):
     if isinstance(_input, List):
         for item in _input:
