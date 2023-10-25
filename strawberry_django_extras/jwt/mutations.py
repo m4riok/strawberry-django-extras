@@ -9,11 +9,13 @@ from strawberry.types import Info
 from strawberry_django_extras.exceptions import JWTError
 
 from .decorators import sync_or_async
-from .refresh_token.shortcuts import create_refresh_token, get_refresh_token, get_refresh_token_user
 from .settings import jwt_settings
 from .shortcuts import get_token, get_user_by_token
-from .types import RefreshedTokenType, TokenPayloadType, TokenType
+from .types import RefreshTokenType, TokenPayloadType, TokenType
 from .utils import get_payload
+
+if jwt_settings.JWT_LONG_RUNNING_REFRESH_TOKEN:
+    from .refresh_token.shortcuts import create_refresh_token, get_refresh_token, get_refresh_token_user
 
 # including these so auto import cleanup doesn't remove them
 k_junk = Optional[str]
@@ -53,13 +55,13 @@ class JWTMutations:
 
                 if jwt_settings.JWT_REUSE_REFRESH_TOKENS:
                     new_refresh_token = create_refresh_token(user, old_refresh_token)
-                    refresh_token = RefreshedTokenType(
+                    refresh_token = RefreshTokenType(
                         token=new_refresh_token.token,
                         exp=new_refresh_token.get_exp(),
                         iat=new_refresh_token.get_iat(),
                     )
                 else:
-                    refresh_token = RefreshedTokenType(
+                    refresh_token = RefreshTokenType(
                         token=old_refresh_token.token,
                         exp=old_refresh_token.get_exp(),
                         iat=old_refresh_token.get_iat(),
@@ -85,13 +87,13 @@ class JWTMutations:
 
             if jwt_settings.JWT_ALLOW_REFRESH and jwt_settings.JWT_LONG_RUNNING_REFRESH_TOKEN:
                 new_refresh_token = create_refresh_token(user, None)
-                refresh_token = RefreshedTokenType(
+                refresh_token = RefreshTokenType(
                     token=new_refresh_token.token,
                     exp=new_refresh_token.get_exp(),
                     iat=new_refresh_token.get_iat(),
                 )
 
-        return TokenType(token=token, refresh_token=refresh_token) if refresh_token else TokenType(token=token)
+        return TokenType(token=token, refresh_token=refresh_token)
 
     # noinspection PyUnusedLocal
     @strawberry.mutation

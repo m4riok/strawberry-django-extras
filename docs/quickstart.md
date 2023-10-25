@@ -33,7 +33,7 @@ please refer to the the [JWT part of these docs](./guide/jwt.md).
 ```{.python title="settings.py"}
   MIDDLEWARE = [
     ...
-    'strawberry_django_extras.jwt.middleware.JWTMiddleware',
+    'strawberry_django_extras.jwt.middleware.jwt_middleware",
 ]
 ```
 

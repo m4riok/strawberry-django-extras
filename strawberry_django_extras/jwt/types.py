@@ -5,7 +5,7 @@ from strawberry import UNSET
 
 
 @strawberry.type
-class RefreshedTokenType:
+class RefreshTokenType:
     token: str
     exp: int
     iat: int
@@ -14,7 +14,7 @@ class RefreshedTokenType:
 @strawberry.type
 class TokenType:
     token: str
-    refresh_token: Optional[RefreshedTokenType] = UNSET
+    refresh_token: Optional[RefreshTokenType] = UNSET
 
 
 @strawberry.type
