@@ -472,7 +472,8 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                         )
                     if _rel_input.update is not UNSET:
                         rel_obj = getattr(
-                            val.model.objects.get(pk=int(_input.id)), val.name,
+                            val.model.objects.get(pk=int(_input.id)),
+                            val.name,
                         )
                         if rel_obj is None:
                             raise SDJExtrasError(
@@ -504,7 +505,8 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                 " the parent update input had no id field provided.",
                             )
                         rel_obj = getattr(
-                            val.model.objects.get(pk=int(_input.id)), val.name,
+                            val.model.objects.get(pk=int(_input.id)),
+                            val.name,
                         )
                         rel["deletions"].append(
                             {"model": val.related_model, "pks": [rel_obj.pk]},
@@ -774,13 +776,16 @@ def perform_validation(_input, info):
             _input.validate(info)
 
         for key, val in _input.__dict__.items():
-            if (
-                val is not None
-                and val is not UNSET
-                and hasattr(_input, f"validate_{to_camel_case(key)}")
-                and callable(getattr(_input, f"validate_{to_camel_case(key)}"))
-            ):
-                getattr(_input, f"validate_{to_camel_case(key)}")(info, val)
+            if val is not None and val is not UNSET:
+                if hasattr(_input, f"validate_{to_camel_case(key)}") and callable(
+                    getattr(_input, f"validate_{to_camel_case(key)}")
+                ):
+                    getattr(_input, f"validate_{to_camel_case(key)}")(info, val)
+
+                if hasattr(_input, f"validate_{key}") and callable(
+                    getattr(_input, f"validate_{key}")
+                ):
+                    getattr(_input, f"validate_{key}")(info, val)
 
 
 # noinspection DuplicatedCode
@@ -808,10 +813,17 @@ def check_permissions(_input, info):
             _input.check_permissions(info)
 
         for key, val in _input.__dict__.items():
-            if (
-                val is not None
-                and val is not UNSET
-                and hasattr(_input, f"check_permissions_{to_camel_case(key)}")
-                and callable(getattr(_input, f"check_permissions_{to_camel_case(key)}"))
-            ):
-                getattr(_input, f"check_permissions_{to_camel_case(key)}")(info, val)
+            if val is not None and val is not UNSET:
+                if hasattr(
+                    _input, f"check_permissions_{to_camel_case(key)}"
+                ) and callable(
+                    getattr(_input, f"check_permissions_{to_camel_case(key)}")
+                ):
+                    getattr(_input, f"check_permissions_{to_camel_case(key)}")(
+                        info, val
+                    )
+
+                if hasattr(_input, f"check_permissions_{key}") and callable(
+                    getattr(_input, f"check_permissions_{key}")
+                ):
+                    getattr(_input, f"check_permissions_{key}")(info, val)
