@@ -72,6 +72,9 @@ class Validators(FieldExtension):
     ):
         super().__init__(**kwargs)
 
+    # wrapping required because somehow strawberry_django lands us in resolve instead of resolve_async even when
+    # running in async context ( unless we have permission_classes which is weird, right? )
+    @sync_or_async
     def resolve(self, next_, source, info, **kwargs):
         mutation_input = kwargs.get("data", None)
         perform_validation(mutation_input, info)
@@ -96,6 +99,9 @@ class Permissions(FieldExtension):
     ):
         super().__init__(**kwargs)
 
+    # wrapping required because somehow strawberry_django lands us in resolve instead of resolve_async even when
+    # running in async context ( unless we have permission_classes which is weird, right? )
+    @sync_or_async
     def resolve(self, next_, source, info, **kwargs):
         mutation_input = kwargs.get("data", None)
         check_permissions(mutation_input, info)
