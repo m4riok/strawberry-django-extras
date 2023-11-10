@@ -781,11 +781,13 @@ def perform_validation(_input, info):
                     getattr(_input, f"validate_{to_camel_case(key)}")
                 ):
                     getattr(_input, f"validate_{to_camel_case(key)}")(info, val)
+                    continue
 
                 if hasattr(_input, f"validate_{key}") and callable(
                     getattr(_input, f"validate_{key}")
                 ):
                     getattr(_input, f"validate_{key}")(info, val)
+                    continue
 
 
 # noinspection DuplicatedCode
@@ -822,8 +824,10 @@ def check_permissions(_input, info):
                     getattr(_input, f"check_permissions_{to_camel_case(key)}")(
                         info, val
                     )
+                    continue
 
                 if hasattr(_input, f"check_permissions_{key}") and callable(
                     getattr(_input, f"check_permissions_{key}")
                 ):
                     getattr(_input, f"check_permissions_{key}")(info, val)
+                    continue
