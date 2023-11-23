@@ -15,7 +15,11 @@ from .types import RefreshTokenType, TokenPayloadType, TokenType
 from .utils import get_payload
 
 if jwt_settings.JWT_LONG_RUNNING_REFRESH_TOKEN:
-    from .refresh_token.shortcuts import create_refresh_token, get_refresh_token, get_refresh_token_user
+    from .refresh_token.shortcuts import (
+        create_refresh_token,
+        get_refresh_token,
+        get_refresh_token_user,
+    )
 
 # including these so auto import cleanup doesn't remove them
 k_junk = Optional[str]
@@ -28,9 +32,10 @@ class JWTMutations:
     @strawberry.mutation
     @sync_or_async
     @with_signature(
-        "issue(self, info: Info, %s: Optional[str] = UNSET, password: Optional[str] = UNSET, refresh_token: Optional[str] = UNSET) -> TokenType" % get_user_model().USERNAME_FIELD)
+        "issue(self, info: Info, %s: Optional[str] = UNSET, password: Optional[str] = UNSET, refresh_token: Optional[str] = UNSET) -> TokenType"
+        % get_user_model().USERNAME_FIELD
+    )
     def issue(self, **kwargs) -> TokenType:  # noqa: PLR0912
-
         refresh_token = None
 
         r_token = kwargs.get("refresh_token", UNSET)
@@ -77,7 +82,7 @@ class JWTMutations:
             creds = {get_user_model().USERNAME_FIELD: uname_field, "password": password}
             try:
                 user = authenticate(**creds)
-            except Exception as e:    # noqa: BLE001
+            except Exception as e:  # noqa: BLE001
                 raise JWTError("Authentication failure") from e
 
             if user is None:

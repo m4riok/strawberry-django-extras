@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "strawberry-django-extras"
-version = "0.1.8"
+version = "0.1.9"
 description = "Strawberry GraphQL Django Extras"
 authors = ["Giorgos Gernas <m4riok@gmail.com>"]
 maintainers = ["Giorgos Gernas <m4riok@gmail.com>"]
@@ -12,9 +12,9 @@ keywords = ["graphql", "api", "django", "strawberry-graphql"]
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0"
 Django = ">=4.0"
-strawberry-graphql = ">=0.209.4"
-strawberry-graphql-django = ">=0.20.0"
-makefun = ">=1.15.1"
+strawberry-graphql = ">=0.215.1"
+strawberry-graphql-django = ">=0.25.0"
+makefun = ">=1.15.2"
 PyJWT = ">=2.1.0"
 cryptography = ">=38.0"
 graphql-core = ">=3.1.5"
@@ -36,7 +36,7 @@ mkdocs-material = "^9.0.4"
 mkdocs-minify-plugin = "^0.7.1"
 pymdown-extensions = "^10.0.1"
 mkdocstrings = { version = "^0.23.0", extras = ["python"] }
-ruff = "^0.0.292"
+ruff = "^0.1.6"
 django-types = "^0.18.0"
 Markdown = "^3.3.7"
 Pygments = "^2.15.1"
@@ -48,7 +48,7 @@ requires = ["poetry-core>=1.0.0", "setuptools"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
-line-length = 320
+line-length = 100
 select = [
     "A",
     "ASYNC100",
@@ -95,7 +95,24 @@ select = [
 ]
 ignore = [
     "TRY003",
-    "PLR6301"
+    "PLR6301",
+    "PLR6201",
+    "PLC0415",
+    "W191",
+    "E111",
+    "E114",
+    "E117",
+    "D206",
+    "D300",
+    "Q000",
+    "Q001",
+    "Q002",
+    "Q003",
+    "COM812",
+    "COM819",
+    "ISC001",
+    "ISC002",
+    "E501"
 ]
 target-version = "py38"
 exclude = [
@@ -111,10 +128,13 @@ exclude = [
     "build",
     "dist",
 ]
+[tool.ruff.format]
+exclude = ["**/migrations/*"]
 [tool.ruff.per-file-ignores]
 "tests/*" = ["A003", "PLW0603", "PLR2004"]
 "examples/*" = ["A003"]
-"**/migrations/*" = ["RUF012"]
+"**/migrations/*" = ["RUF012", "E501", "Q000", "I001", "COM812"]
+"asp/*" = ["N999"]
 
 [tool.black]
 target-version = ['py38', 'py39', 'py310', 'py311']

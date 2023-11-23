@@ -33,6 +33,9 @@ class MutationHooks(FieldExtension):
         self.pre_async = pre_async
         self.post_async = post_async
 
+    # wrapping required because somehow strawberry lands us in resolve instead of resolve_async even when
+    # running in async context ( unless we have permission_classes which is weird, right? )
+    @sync_or_async
     def resolve(self, next_, source, info, **kwargs):
         if self.pre:
             self.pre(info, kwargs.get("data", None))
@@ -72,7 +75,7 @@ class Validators(FieldExtension):
     ):
         super().__init__(**kwargs)
 
-    # wrapping required because somehow strawberry_django lands us in resolve instead of resolve_async even when
+    # wrapping required because somehow strawberry lands us in resolve instead of resolve_async even when
     # running in async context ( unless we have permission_classes which is weird, right? )
     @sync_or_async
     def resolve(self, next_, source, info, **kwargs):
@@ -99,7 +102,7 @@ class Permissions(FieldExtension):
     ):
         super().__init__(**kwargs)
 
-    # wrapping required because somehow strawberry_django lands us in resolve instead of resolve_async even when
+    # wrapping required because somehow strawberry lands us in resolve instead of resolve_async even when
     # running in async context ( unless we have permission_classes which is weird, right? )
     @sync_or_async
     def resolve(self, next_, source, info, **kwargs):
@@ -131,6 +134,9 @@ class Relationships(FieldExtension):
     def apply(self, field: StrawberryDjangoField) -> None:
         self.root_field = field
 
+    # wrapping required because somehow strawberry lands us in resolve instead of resolve_async even when
+    # running in async context ( unless we have permission_classes which is weird, right? )
+    @sync_or_async
     def resolve(self, next_, source, info, **kwargs):
         mutation_input = kwargs.get("data", None)
         model = self.root_field.django_model
@@ -199,7 +205,9 @@ class TotalCountPaginationExtension(FieldExtension):
     def get_total_count(self, info: Info, filters=None) -> int:
         if filters is not None:
             return strawberry_django.filters.apply(
-                filters, self.django_model.objects.all(), info,
+                filters,
+                self.django_model.objects.all(),
+                info,
             ).count()
         return self.django_model.objects.count()
 
@@ -208,7 +216,8 @@ class TotalCountPaginationExtension(FieldExtension):
         return PaginatedList(
             results=result,
             total_count=self.get_total_count(
-                filters=kwargs.get("filters", None), info=info,
+                filters=kwargs.get("filters", None),
+                info=info,
             ),
         )
 
@@ -223,6 +232,7 @@ class TotalCountPaginationExtension(FieldExtension):
         return PaginatedList(
             results=result,
             total_count=self.get_total_count(
-                filters=kwargs.get("filters", None), info=info,
+                filters=kwargs.get("filters", None),
+                info=info,
             ),
         )

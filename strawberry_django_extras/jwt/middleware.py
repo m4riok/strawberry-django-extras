@@ -25,6 +25,7 @@ def jwt_middleware(get_response):
             return await get_response(request)
 
     else:
+
         def middleware(request):
             try:
                 user = auth.get_user(request)

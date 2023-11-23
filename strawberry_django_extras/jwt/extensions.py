@@ -13,5 +13,6 @@ class DisableAnonymousIntrospection(SchemaExtension):
 
         if not request.user.is_authenticated and jwt_settings.JWT_AUTHENTICATE_INTROSPECTION:
             self.execution_context.validation_rules = (
-                    (*self.execution_context.validation_rules, NoSchemaIntrospectionCustomRule)
+                *self.execution_context.validation_rules,
+                NoSchemaIntrospectionCustomRule,
             )
