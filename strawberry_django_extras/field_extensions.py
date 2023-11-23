@@ -7,7 +7,7 @@ from asgiref.sync import sync_to_async
 from strawberry.extensions import FieldExtension
 from strawberry_django.optimizer import DjangoOptimizerExtension
 
-from .decorators import sync_or_async
+from .decorators import is_async, sync_or_async
 from .functions import check_permissions, kill_a_rabbit, perform_validation, rabbit_hole
 from .inputs import CRUDInput
 from .types import PaginatedList
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from strawberry_django.fields.field import StrawberryDjangoField
 
 
-# noinspection PyUnresolvedReferences
+# noinspection PyUnresolvedReferences,PyPropertyAccess
 class MutationHooks(FieldExtension):
     # noinspection PyUnresolvedReferences
     def __init__(
@@ -33,41 +33,47 @@ class MutationHooks(FieldExtension):
         self.pre_async = pre_async
         self.post_async = post_async
 
-    # wrapping required because somehow strawberry lands us in resolve instead of resolve_async even when
-    # running in async context ( unless we have permission_classes which is weird, right? )
-    @sync_or_async
-    def resolve(self, next_, source, info, **kwargs):
-        if self.pre:
-            self.pre(info, kwargs.get("data", None))
+    def apply(self, field: StrawberryDjangoField) -> None:
+        if is_async():
+            field.is_async = True
 
-        result = next_(source, info, **kwargs)
+    if not is_async():
 
-        if self.post:
-            self.post(info, kwargs.get("data", None), result)
-        return result
+        def resolve(self, next_, source, info, **kwargs):
+            if self.pre:
+                self.pre(info, kwargs.get("data", None))
 
-    async def resolve_async(
-        self,
-        next_: Callable[..., Awaitable[Any]],
-        source: Any,
-        info: Info,
-        **kwargs: Any,
-    ) -> Any:
-        if self.pre_async:
-            await self.pre_async(info, kwargs.get("data", None))
-        elif self.pre:
-            await sync_or_async(self.pre)(info, kwargs.get("data", None))
+            result = next_(source, info, **kwargs)
 
-        result = await next_(source, info, **kwargs)
+            if self.post:
+                self.post(info, kwargs.get("data", None), result)
+            return result
 
-        if self.post_async:
-            await self.post_async(info, kwargs.get("data", None), result)
-        elif self.post:
-            await sync_or_async(self.post)(info, kwargs.get("data", None), result)
+    else:
 
-        return result
+        async def resolve_async(
+            self,
+            next_: Callable[..., Awaitable[Any]],
+            source: Any,
+            info: Info,
+            **kwargs: Any,
+        ) -> Any:
+            if self.pre_async:
+                await self.pre_async(info, kwargs.get("data", None))
+            elif self.pre:
+                await sync_or_async(self.pre)(info, kwargs.get("data", None))
+
+            result = await next_(source, info, **kwargs)
+
+            if self.post_async:
+                await self.post_async(info, kwargs.get("data", None), result)
+            elif self.post:
+                await sync_or_async(self.post)(info, kwargs.get("data", None), result)
+
+            return result
 
 
+# noinspection PyPropertyAccess
 class Validators(FieldExtension):
     def __init__(
         self,
@@ -75,26 +81,32 @@ class Validators(FieldExtension):
     ):
         super().__init__(**kwargs)
 
-    # wrapping required because somehow strawberry lands us in resolve instead of resolve_async even when
-    # running in async context ( unless we have permission_classes which is weird, right? )
-    @sync_or_async
-    def resolve(self, next_, source, info, **kwargs):
-        mutation_input = kwargs.get("data", None)
-        perform_validation(mutation_input, info)
-        return next_(source, info, **kwargs)
+    def apply(self, field: StrawberryDjangoField) -> None:
+        if is_async():
+            field.is_async = True
 
-    async def resolve_async(
-        self,
-        next_: Callable[..., Awaitable[Any]],
-        source: Any,
-        info: Info,
-        **kwargs: Any,
-    ) -> Any:
-        mutation_input = kwargs.get("data", None)
-        await sync_to_async(perform_validation)(mutation_input, info)
-        return await next_(source, info, **kwargs)
+    if not is_async():
+
+        def resolve(self, next_, source, info, **kwargs):
+            mutation_input = kwargs.get("data", None)
+            perform_validation(mutation_input, info)
+            return next_(source, info, **kwargs)
+
+    else:
+
+        async def resolve_async(
+            self,
+            next_: Callable[..., Awaitable[Any]],
+            source: Any,
+            info: Info,
+            **kwargs: Any,
+        ) -> Any:
+            mutation_input = kwargs.get("data", None)
+            await sync_to_async(perform_validation)(mutation_input, info)
+            return await next_(source, info, **kwargs)
 
 
+# noinspection PyPropertyAccess
 class Permissions(FieldExtension):
     def __init__(
         self,
@@ -102,26 +114,32 @@ class Permissions(FieldExtension):
     ):
         super().__init__(**kwargs)
 
-    # wrapping required because somehow strawberry lands us in resolve instead of resolve_async even when
-    # running in async context ( unless we have permission_classes which is weird, right? )
-    @sync_or_async
-    def resolve(self, next_, source, info, **kwargs):
-        mutation_input = kwargs.get("data", None)
-        check_permissions(mutation_input, info)
-        return next_(source, info, **kwargs)
+    def apply(self, field: StrawberryDjangoField) -> None:
+        if is_async():
+            field.is_async = True
 
-    async def resolve_async(
-        self,
-        next_: Callable[..., Awaitable[Any]],
-        source: Any,
-        info: Info,
-        **kwargs: Any,
-    ) -> Any:
-        mutation_input = kwargs.get("data", None)
-        await sync_to_async(check_permissions)(mutation_input, info)
-        return await next_(source, info, **kwargs)
+    if not is_async():
+
+        def resolve(self, next_, source, info, **kwargs):
+            mutation_input = kwargs.get("data", None)
+            check_permissions(mutation_input, info)
+            return next_(source, info, **kwargs)
+
+    else:
+
+        async def resolve_async(
+            self,
+            next_: Callable[..., Awaitable[Any]],
+            source: Any,
+            info: Info,
+            **kwargs: Any,
+        ) -> Any:
+            mutation_input = kwargs.get("data", None)
+            await sync_to_async(check_permissions)(mutation_input, info)
+            return await next_(source, info, **kwargs)
 
 
+# noinspection PyPropertyAccess
 class Relationships(FieldExtension):
     root_field: StrawberryDjangoFieldBase = None
 
@@ -133,57 +151,60 @@ class Relationships(FieldExtension):
 
     def apply(self, field: StrawberryDjangoField) -> None:
         self.root_field = field
+        if is_async():
+            field.is_async = True
 
-    # wrapping required because somehow strawberry lands us in resolve instead of resolve_async even when
-    # running in async context ( unless we have permission_classes which is weird, right? )
-    @sync_or_async
-    def resolve(self, next_, source, info, **kwargs):
-        mutation_input = kwargs.get("data", None)
-        model = self.root_field.django_model
-        rel = {}
-        rabbit_hole(model, mutation_input, rel)
-        for k, v in mutation_input.__dict__.copy().items():
-            if isinstance(v, CRUDInput):
-                delattr(mutation_input, k)
+    if not is_async():
 
-        with DjangoOptimizerExtension.disabled():
-            return kill_a_rabbit(
-                rel,
-                None,
-                False,
-                is_root=True,
-                next_=next_,
-                source=source,
-                info=info,
-                ni=mutation_input,
-            )
+        def resolve(self, next_, source, info, **kwargs):
+            mutation_input = kwargs.get("data", None)
+            model = self.root_field.django_model
+            rel = {}
+            rabbit_hole(model, mutation_input, rel)
+            for k, v in mutation_input.__dict__.copy().items():
+                if isinstance(v, CRUDInput):
+                    delattr(mutation_input, k)
 
-    async def resolve_async(
-        self,
-        next_: Callable[..., Awaitable[Any]],
-        source: Any,
-        info: Info,
-        **kwargs: Any,
-    ) -> Any:
-        mutation_input = kwargs.get("data", None)
-        model = self.root_field.django_model
-        rel = {}
-        await sync_to_async(rabbit_hole)(model, mutation_input, rel, None)
-        for k, v in mutation_input.__dict__.copy().items():
-            if isinstance(v, CRUDInput):
-                delattr(mutation_input, k)
+            with DjangoOptimizerExtension.disabled():
+                return kill_a_rabbit(
+                    rel,
+                    None,
+                    False,
+                    is_root=True,
+                    next_=next_,
+                    source=source,
+                    info=info,
+                    ni=mutation_input,
+                )
 
-        with await sync_to_async(DjangoOptimizerExtension.disabled)():
-            return await sync_to_async(kill_a_rabbit)(
-                rel,
-                None,
-                False,
-                is_root=True,
-                next_=next_,
-                source=source,
-                info=info,
-                ni=mutation_input,
-            )
+    else:
+        # noinspection PyArgumentList
+        async def resolve_async(
+            self,
+            next_: Callable[..., Awaitable[Any]],
+            source: Any,
+            info: Info,
+            **kwargs: Any,
+        ) -> Any:
+            mutation_input = kwargs.get("data", None)
+            model = self.root_field.django_model
+            rel = {}
+            await sync_to_async(rabbit_hole)(model, mutation_input, rel, None)
+            for k, v in mutation_input.__dict__.copy().items():
+                if isinstance(v, CRUDInput):
+                    delattr(mutation_input, k)
+
+            with await sync_to_async(DjangoOptimizerExtension.disabled)():
+                return await sync_to_async(kill_a_rabbit)(
+                    rel,
+                    None,
+                    False,
+                    is_root=True,
+                    next_=next_,
+                    source=source,
+                    info=info,
+                    ni=mutation_input,
+                )
 
 
 # noinspection PyPropertyAccess
@@ -201,6 +222,9 @@ class TotalCountPaginationExtension(FieldExtension):
         # Now change the type
         field.type = PaginatedList[field.type]
 
+        if is_async():
+            field.is_async = True
+
     @sync_or_async
     def get_total_count(self, info: Info, filters=None) -> int:
         if filters is not None:
@@ -211,28 +235,32 @@ class TotalCountPaginationExtension(FieldExtension):
             ).count()
         return self.django_model.objects.count()
 
-    def resolve(self, next_, source, info, **kwargs):
-        result = next_(source, info, **kwargs)
-        return PaginatedList(
-            results=result,
-            total_count=self.get_total_count(
-                filters=kwargs.get("filters", None),
-                info=info,
-            ),
-        )
+    if not is_async():
 
-    async def resolve_async(
-        self,
-        next_: Callable[..., Awaitable[Any]],
-        source: Any,
-        info: Info,
-        **kwargs: Any,
-    ) -> Any:
-        result = await next_(source, info, **kwargs)
-        return PaginatedList(
-            results=result,
-            total_count=self.get_total_count(
-                filters=kwargs.get("filters", None),
-                info=info,
-            ),
-        )
+        def resolve(self, next_, source, info, **kwargs):
+            result = next_(source, info, **kwargs)
+            return PaginatedList(
+                results=result,
+                total_count=self.get_total_count(
+                    filters=kwargs.get("filters", None),
+                    info=info,
+                ),
+            )
+
+    else:
+
+        async def resolve_async(
+            self,
+            next_: Callable[..., Awaitable[Any]],
+            source: Any,
+            info: Info,
+            **kwargs: Any,
+        ) -> Any:
+            result = await next_(source, info, **kwargs)
+            return PaginatedList(
+                results=result,
+                total_count=self.get_total_count(
+                    filters=kwargs.get("filters", None),
+                    info=info,
+                ),
+            )
