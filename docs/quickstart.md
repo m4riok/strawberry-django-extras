@@ -33,7 +33,7 @@ please refer to the the [JWT part of these docs](./guide/jwt.md).
 ```{.python title="settings.py"}
   MIDDLEWARE = [
     ...
-    'strawberry_django_extras.jwt.middleware.jwt_middleware",
+    "strawberry_django_extras.jwt.middleware.jwt_middleware",
 ]
 ```
 
@@ -53,6 +53,7 @@ please refer to the the [JWT part of these docs](./guide/jwt.md).
 <br />
 
 #### Expose the mutations in your GraphQL schema
+
 ```{.python title="schema.py"}
 from strawberry_django_extras import JWTMutations
 
@@ -63,9 +64,11 @@ class Mutation:
     verify_token = JWTMutations.verify
 
 ```
+
 <br/>
 
 #### Override any settings you might need in your project settings.
+
 ```{.python title="settings.py"}
 GRAPHQL_JWT = {
     'JWT_ALGORITHM': 'EdDSA',
@@ -79,16 +82,20 @@ GRAPHQL_JWT = {
     'JWT_PUBLIC_KEY': base64.b64decode('YOUR_PUBLIC_KEY')
 }
 ```
+
 If you set `JWT_LONG_RUNNING_REFRESH_TOKEN` to `True` you will need to add the following to your settings file:
+
 ```{.python title="settings.py"}
 INSTALLED_APPS = [
     ...
     'strawberry_django_extras.jwt.refresh_token.apps.RefreshTokenConfig',
 ]
 ```
+
 and run `python manage.py migrate` to create the refresh token model.
 
 If you set `JWT_AUTHENTICATE_INTROSPECTION` to `True` you will need to add an extension to the root of your schema:
+
 ```{.python title="schema.py"}
 from strawberry_django_extras.jwt.extensions import DisableAnonymousIntrospection
 
@@ -106,7 +113,9 @@ schema = strawberry.Schema(
 <br/>
 
 ## Mutation Hooks
-Mutation  hooks are provided via a `field_extension` and can be applied to any strawberry mutation. 
+
+Mutation hooks are provided via a `field_extension` and can be applied to any strawberry mutation.
+
 ```{.python title="hooks.py"}
 def update_user_pre(info: Info, mutation_input: UserUpdateInput):
     mutation_input.lastname = mutation_input.lastname.lower()
@@ -120,6 +129,7 @@ async def update_user_post(
 ```
 
 and then applied to your mutation:
+
 ```{.python title="schema.py"}
 from strawberry_django_extras import mutation_hooks
 from strawberry_django import mutations
@@ -137,16 +147,21 @@ class Mutation:
         ]
     )
 ```
+
 !!! note
-    You might have noticed that we are passing both a sync and an async function at the same time. This is possible because if the context is async
-    the sync function will be wrapped with sync_to_async and awaited. If the context is sync passing post_async and pre_async will be ignored.
-    In either case the async functions are awaited.  
+You might have noticed that we are passing both a sync and an async function at the same time. This is possible because
+if the context is async
+the sync function will be wrapped with sync_to_async and awaited. If the context is sync passing post_async and
+pre_async will be ignored.
+In either case the async functions are awaited.
 
 <br/>
 
 ## Input Validations
-Much inspired by the way [graphene-django-cud](https://github.com/tOgg1/graphene-django-cud){:target="_blank"} handles validation, this package provides
-a similar way to validate your input when the respective input classes are instantiated. 
+
+Much inspired by the way [graphene-django-cud](https://github.com/tOgg1/graphene-django-cud){:target="_blank"} handles
+validation, this package provides
+a similar way to validate your input when the respective input classes are instantiated.
 
 ```{.python title="inputs.py"}
 @strawberry_django.input(get_user_model())
@@ -168,10 +183,12 @@ class UserInput:
             )
 ```
 
-When updating an existing object the `pk` will be available through `self.id` so you can validate values in comparison to existing ones. Also info is provided in case
-validations need to be run against the user making the request. 
+When updating an existing object the `pk` will be available through `self.id` so you can validate values in comparison
+to existing ones. Also info is provided in case
+validations need to be run against the user making the request.
 
 Finally add this to each mutation that needs to run validations:
+
 ```{.python title="schema.py"}
 from strawberry_django_extras import with_validation
 from strawberry_django import mutations
@@ -184,12 +201,13 @@ class Mutation:
     )
 ``` 
 
-
 <br/>
 
 ## Permissions
-Similarly to validations, permission checking is run on input instantiation. Since strawberry does not currently provide a way to pass `permission_classes` to input fields
-this package allows you to write your permission checking functions as part of the input class. 
+
+Similarly to validations, permission checking is run on input instantiation. Since strawberry does not currently provide
+a way to pass `permission_classes` to input fields
+this package allows you to write your permission checking functions as part of the input class.
 
 ```{.python title="inputs.py"}
 @strawberry_django.input(get_user_model())
@@ -222,25 +240,34 @@ class Mutation:
         extensions=[with_permissions()]
     )
 ``` 
+
 !!! note
-    As documented by Strawberry extension order does matter so make sure you are passing the `with_permissions()` and `with_validation()` extensions in an order that
-    makes sense for your project. 
+As documented by Strawberry extension order does matter so make sure you are passing the `with_permissions()`
+and `with_validation()` extensions in an order that
+makes sense for your project.
 
 <br/>
 
 ## Nested Mutations
-This package provides support for deeply nested mutations through a field extension and some wrapper input classes. 
 
-It makes sense for the inputs to be different when updating an object vs creating one. So we provide different input wrappers for each type of operation. 
-It also makes sense that the api provided would be different depending on the type of relationship between the related models. Brief explanations of each 
+This package provides support for deeply nested mutations through a field extension and some wrapper input classes.
+
+It makes sense for the inputs to be different when updating an object vs creating one. So we provide different input
+wrappers for each type of operation.
+It also makes sense that the api provided would be different depending on the type of relationship between the related
+models. Brief explanations of each
 input wrapper is provided below. For details refer to relevant guide on [nested mutations](./guide/mutations.md).
 
 ### Wrappers for nested objects for create mutations
 
 #### One to One
-`CRUDOneToOneCreateInput` can be used when you want to create or assign a related object, alongside the creation of your root object. The resulting schema will provide two actions
-for your mutation `create` and `assign` which are mutually exclusive. `create` is of type `UserCreateInput` which you will need to provide and `assign` is of type `ID`. A brief
+
+`CRUDOneToOneCreateInput` can be used when you want to create or assign a related object, alongside the creation of your
+root object. The resulting schema will provide two actions
+for your mutation `create` and `assign` which are mutually exclusive. `create` is of type `UserCreateInput` which you
+will need to provide and `assign` is of type `ID`. A brief
 example follows.
+
 ```{.python title="models.py"}
     class User(AbstractBaseUser, PermissionsMixin):
         firstname = models.CharField(max_length=30, blank=True)
@@ -253,6 +280,7 @@ example follows.
         name = models.CharField(max_length=255, default=None, null=True, blank=True)
         user = models.OneToOneField(User, related_name="goat", on_delete=models.CASCADE, null=True, default=None)
 ```
+
 ```{.python title="inputs.py"}
     from strawberry_django_extras import CRUDOneToOneCreateInput
     
@@ -269,6 +297,7 @@ example follows.
         name: auto
         user: Optional[CRUDOneToOneCreateInput['UserInput']] = UNSET
 ```
+
 ```{.python title="schema.py"}
     from strawberry_django_extras import with_cud_relationships
     from strawberry_django import mutations
@@ -287,53 +316,65 @@ example follows.
 ```
 
 Now we can create or assign nested objects on either side of the relationship.
+
 ```graphql 
 mutation {
-  createGoat(data: {
-    name: "Marina"
-    user: {
-      create: {
-        firstname: "Lakis"
-        lastname: "Lalakis"
-        email: "lalakis@domaim.tld"
-        password: "abc"
-      }
+    createGoat(data: {
+        name: "Marina"
+        user: {
+            create: {
+                firstname: "Lakis"
+                lastname: "Lalakis"
+                email: "lalakis@domaim.tld"
+                password: "abc"
+            }
+        }
+    }) {
+        id
+        name
+        user {
+            id
+            lastname
+            firstname
+            email
+        }
     }
-  }) {
-    id
-    name
-    user {
-      id
-      lastname
-      firstname
-      email
-    }
-  }
 }
 ```
 
-
 #### One to Many
-`CRUDOneToManyCreateInput`. Similarly to the one to one wrapper it provides two actions `create` and `assign` which are mutually exclusive. The only difference is 
-that the relationship is through a `ForeignKey` meaning the other side of the relationship would be Many to One requiring a different wrapper. 
+
+`CRUDOneToManyCreateInput`. Similarly to the one to one wrapper it provides two actions `create` and `assign` which are
+mutually exclusive. The only difference is
+that the relationship is through a `ForeignKey` meaning the other side of the relationship would be Many to One
+requiring a different wrapper.
 
 #### Many to One
-`CRUDManyToOneCreateInput`. This wrapper is used when the relationship is Many to One. It provides two actions `create` and `assign` which are __NOT mutually exclusive__.
-The inputs are of course lists and of type `SomeModelInput` and `ID` respectively. 
+
+`CRUDManyToOneCreateInput`. This wrapper is used when the relationship is Many to One. It provides two actions `create`
+and `assign` which are __NOT mutually exclusive__.
+The inputs are of course lists and of type `SomeModelInput` and `ID` respectively.
 
 #### Many to Many
-`CRUDManyToManyCreateInput` is provided for Many-to-Many relationships. It provides two actions `create` and `assign` which are __NOT mutually exclusive__.
-The inputs are ofcourse lists again but there's one important difference. They are internally wrapped again to provide a mechanism for the user to provide
-`through_defaults` for the relationship either on assignment or creation. The type for through_defaults is JSON and the values should follow snake case.  
 
+`CRUDManyToManyCreateInput` is provided for Many-to-Many relationships. It provides two actions `create` and `assign`
+which are __NOT mutually exclusive__.
+The inputs are ofcourse lists again but there's one important difference. They are internally wrapped again to provide a
+mechanism for the user to provide
+`through_defaults` for the relationship either on assignment or creation. The type for through_defaults is JSON and the
+values should follow snake case.
 
 ### Wrappers for nested objects for update mutations
-These wrappers expect two inputs to be provided instead of the one that was necessary for creation. The first is for creation of new related objects when updating the current 
+
+These wrappers expect two inputs to be provided instead of the one that was necessary for creation. The first is for
+creation of new related objects when updating the current
 object and the second is for updates to the data of already related objects.
 
 #### One to One
-`CRUDOneToOneUpdateInput` can be used when alongside an update mutation you want to update related objects. The resulting schema will provide three possible actions for your 
-mutation and a boolean flag. 
+
+`CRUDOneToOneUpdateInput` can be used when alongside an update mutation you want to update related objects. The
+resulting schema will provide three possible actions for your
+mutation and a boolean flag.
 
 - `create` of type `UserInput` used to create a new related object.
 - `assign` of type `ID` used to assign an existing objects as related.
@@ -342,25 +383,32 @@ mutation and a boolean flag.
 - `delete` of type `bool` indicating whether the related object should be deleted.
   > Note that this flag can be used together with assign or create to delete the previously related object.
 
-
 #### One to Many
-`CRUDOneToManyUpdateInput` can be used when alongside an update mutation you want to update related objects. The resulting schema will provide three possible actions for
-your mutation and a boolean flag. These are the same as the ones provided by the One to One wrapper, and they function in exactly the same fashion. 
 
-For a more detailed explanation with examples please refer to the relevant guide on [nested mutations](./guide/mutations.md).
+`CRUDOneToManyUpdateInput` can be used when alongside an update mutation you want to update related objects. The
+resulting schema will provide three possible actions for
+your mutation and a boolean flag. These are the same as the ones provided by the One to One wrapper, and they function
+in exactly the same fashion.
+
+For a more detailed explanation with examples please refer to the relevant guide
+on [nested mutations](./guide/mutations.md).
 
 #### Many to One
-`CRUDManyToOneUpdateInput` can be used when alongside an update mutation you want to update related objects. The resulting schema will provide __four__ possible actions 
+
+`CRUDManyToOneUpdateInput` can be used when alongside an update mutation you want to update related objects. The
+resulting schema will provide __four__ possible actions
 for your mutation. These are as follows:
 
 - `create` of type `List[UserInput]` used to create new related objects.
 - `assign` of type `List[ID]` used to assign relations with existing objects.
 - `update` of type `List[UserPartial]` used to update the fields of existing related objects.
-- `remove` of type `List[CRUDRemoveInput]` which wraps an `ID` and a `bool` flag indicating whether the removed object should be deleted. 
-
+- `remove` of type `List[CRUDRemoveInput]` which wraps an `ID` and a `bool` flag indicating whether the removed object
+  should be deleted.
 
 #### Many to Many
-`CRUDManyToManyUpdateInput` can be used when alongside an update mutation you want to update related objects. The resulting schema will provide __four__ possible actions
+
+`CRUDManyToManyUpdateInput` can be used when alongside an update mutation you want to update related objects. The
+resulting schema will provide __four__ possible actions
 for your mutation. These are as follows:
 
 - `create` of type `List[CRUDManyToManyItem]` which wraps two inputs.
@@ -372,7 +420,8 @@ for your mutation. These are as follows:
 - `update` of type `List[CRUDManyToManyItemUpdate]` which wraps two inputs.
     - `objectData` of type `UserPartial` used to update the fields of the related object.
     - `throughDefaults` of type `JSON` used to update the fields of the `through` model if one exists.
-- `remove` of type `List[CRUDRemoveInput]` which wraps an `ID` and a `bool` flag indicating whether the removed object should be deleted.
+- `remove` of type `List[CRUDRemoveInput]` which wraps an `ID` and a `bool` flag indicating whether the removed object
+  should be deleted.
 
-
-For a more detailed explanation with examples please refer to the relevant guide on [nested mutations](./guide/mutations.md).
+For a more detailed explanation with examples please refer to the relevant guide
+on [nested mutations](./guide/mutations.md).
