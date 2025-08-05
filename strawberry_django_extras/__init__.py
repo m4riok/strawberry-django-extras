@@ -1,67 +1,17 @@
-from .decorators import sync_or_async
-from .field_extensions import (
-    MutationHooks,
-    Permissions,
-    Relationships,
-    TotalCountPaginationExtension,
-    Validators,
-)
-from .inputs import (
-    CRUDInput,
-    CRUDManyToManyCreateInput,
-    CRUDManyToManyUpdateInput,
-    CRUDManyToOneCreateInput,
-    CRUDManyToOneUpdateInput,
-    CRUDOneToManyCreateInput,
-    CRUDOneToManyUpdateInput,
-    CRUDOneToOneCreateInput,
-    CRUDOneToOneUpdateInput,
-)
+"""
+Strawberry Django Extras
 
-__all__ = [
-    "sync_or_async",
-    "JWTMutations",
-    "mutation_hooks",
-    "with_validation",
-    "with_cud_relationships",
-    "with_permissions",
-    "with_total_count",
-    "CRUDInput",
-    "CRUDManyToOneCreateInput",
-    "CRUDManyToOneUpdateInput",
-    "CRUDOneToManyCreateInput",
-    "CRUDOneToManyUpdateInput",
-    "CRUDManyToManyCreateInput",
-    "CRUDManyToManyUpdateInput",
-    "CRUDOneToOneCreateInput",
-    "CRUDOneToOneUpdateInput",
-]
+A collection of extensions and utilities for Strawberry GraphQL with Django.
 
-from typing import Optional
+All imports must be done directly from their respective modules to prevent
+eager loading and async context detection issues.
 
-from .jwt.mutations import JWTMutations
+Core modules:
+- decorators: sync_or_async utility
+- inputs: CRUD input types
+- field_extensions: Field extension classes and factory functions
+- jwt.mutations: JWT authentication mutations
+- lazy: Context-aware lazy view and consumer classes
+"""
 
-
-def mutation_hooks(
-    pre: Optional[callable] = None,
-    post: Optional[callable] = None,
-    pre_async: Optional[callable] = None,
-    post_async: Optional[callable] = None,
-):
-    return MutationHooks(pre, post, pre_async, post_async)
-
-
-def with_validation():
-    return Validators()
-
-
-def with_permissions():
-    return Permissions()
-
-
-def with_cud_relationships():
-    return Relationships()
-
-
-def with_total_count():
-    return TotalCountPaginationExtension()
+__all__ = []

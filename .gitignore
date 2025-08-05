@@ -84,3 +84,4 @@ cython_debug/
 .python-version
 .DS_Store
 /.ruff_cache/
+.vscode

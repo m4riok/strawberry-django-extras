@@ -28,7 +28,7 @@ validations need to be run against the user making the request.
 
 Finally add this to each mutation that needs to run validations:
 ```{.python title="schema.py"}
-from strawberry_django_extras import with_validation
+from strawberry_django_extras.field_extensions import with_validation
 from strawberry_django import mutations
 
 @strawberry.type

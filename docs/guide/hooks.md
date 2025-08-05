@@ -15,7 +15,7 @@ async def update_user_post(
 
 and then applied to your mutation:
 ```{.python title="schema.py"}
-from strawberry_django_extras import mutation_hooks
+from strawberry_django_extras.field_extensions import mutation_hooks
 from strawberry_django import mutations
 from .hooks import update_user_pre, update_user_post
 

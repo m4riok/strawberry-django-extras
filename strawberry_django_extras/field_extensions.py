@@ -264,3 +264,34 @@ class TotalCountPaginationExtension(FieldExtension):
                     info=info,
                 ),
             )
+
+
+# Factory functions for extensions
+def mutation_hooks(
+    pre: callable = None,  # noqa: RUF013
+    post: callable = None,  # noqa: RUF013
+    pre_async: callable = None,  # noqa: RUF013
+    post_async: callable = None,  # noqa: RUF013
+):
+    """Create a MutationHooks extension with the specified hooks."""
+    return MutationHooks(pre, post, pre_async, post_async)
+
+
+def with_validation():
+    """Create a Validators extension."""
+    return Validators()
+
+
+def with_permissions():
+    """Create a Permissions extension."""
+    return Permissions()
+
+
+def with_cud_relationships():
+    """Create a Relationships extension."""
+    return Relationships()
+
+
+def with_total_count():
+    """Create a TotalCountPaginationExtension."""
+    return TotalCountPaginationExtension()

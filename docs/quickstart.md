@@ -55,7 +55,7 @@ please refer to the the [JWT part of these docs](./guide/jwt.md).
 #### Expose the mutations in your GraphQL schema
 
 ```{.python title="schema.py"}
-from strawberry_django_extras import JWTMutations
+from strawberry_django_extras.jwt.mutations import JWTMutations
 
 @strawberry.type
 class Mutation:
@@ -131,7 +131,7 @@ async def update_user_post(
 and then applied to your mutation:
 
 ```{.python title="schema.py"}
-from strawberry_django_extras import mutation_hooks
+from strawberry_django_extras.field_extensions import mutation_hooks
 from strawberry_django import mutations
 from .hooks import update_user_pre, update_user_post
 
@@ -190,7 +190,7 @@ validations need to be run against the user making the request.
 Finally add this to each mutation that needs to run validations:
 
 ```{.python title="schema.py"}
-from strawberry_django_extras import with_validation
+from strawberry_django_extras.field_extensions import with_validation
 from strawberry_django import mutations
 
 @strawberry.type
@@ -230,7 +230,7 @@ class UserInput:
 ```
 
 ```{.python title="schema.py"}
-from strawberry_django_extras import with_permissions
+from strawberry_django_extras.field_extensions import with_permissions
 from strawberry_django import mutations
 
 @strawberry.type
@@ -282,7 +282,7 @@ example follows.
 ```
 
 ```{.python title="inputs.py"}
-    from strawberry_django_extras import CRUDOneToOneCreateInput
+    from strawberry_django_extras.inputs import CRUDOneToOneCreateInput
     
     @strawberry_django.input(get_user_model())
     class UserInput:
@@ -299,7 +299,7 @@ example follows.
 ```
 
 ```{.python title="schema.py"}
-    from strawberry_django_extras import with_cud_relationships
+    from strawberry_django_extras.field_extensions import with_cud_relationships
     from strawberry_django import mutations
     
     @strawberry.type

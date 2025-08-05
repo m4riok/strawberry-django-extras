@@ -63,6 +63,7 @@ plugins:
 nav:
   - index.md
   - quickstart.md
+  - breaking_changes.md
   - Guide:
     - guide/jwt.md
     - guide/validation.md
@@ -70,6 +71,7 @@ nav:
     - guide/hooks.md
     - guide/mutations.md
     - guide/pagination.md
+    - guide/lazy_loading.md
   - community-projects.md
 
 

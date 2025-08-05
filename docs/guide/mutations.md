@@ -24,7 +24,7 @@ example follows.
         user = models.OneToOneField(User, related_name="goat", on_delete=models.CASCADE, null=True, default=None)
 ```
 ```{.python title="inputs.py"}
-    from strawberry_django_extras import CRUDOneToOneCreateInput
+    from strawberry_django_extras.inputs import CRUDOneToOneCreateInput
     
     @strawberry_django.input(get_user_model())
     class UserInput:
@@ -40,7 +40,7 @@ example follows.
         user: Optional[CRUDOneToOneCreateInput['UserInput']] = UNSET
 ```
 ```{.python title="schema.py"}
-    from strawberry_django_extras import with_cud_relationships
+    from strawberry_django_extras.field_extensions import with_cud_relationships
     from strawberry_django import mutations
     
     @strawberry.type

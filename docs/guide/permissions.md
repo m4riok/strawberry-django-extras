@@ -24,7 +24,7 @@ class UserInput:
 ```
 
 ```{.python title="schema.py"}
-from strawberry_django_extras import with_permissions
+from strawberry_django_extras.field_extensions import with_permissions
 from strawberry_django import mutations
 
 @strawberry.type

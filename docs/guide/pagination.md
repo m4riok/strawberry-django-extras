@@ -8,7 +8,7 @@ This field extension allows you to use the default offset limit pagination provi
 ```python
 import strawberry
 import strawberry_django
-from strawberry_django_extras import with_total_count
+from strawberry_django_extras.field_extensions import with_total_count
 
 @strawberry.type
 class Query:

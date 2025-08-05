@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "strawberry-django-extras"
-version = "0.1.10"
+version = "0.2.0"
 description = "Strawberry GraphQL Django Extras"
 authors = ["Giorgos Gernas <m4riok@gmail.com>"]
 maintainers = ["Giorgos Gernas <m4riok@gmail.com>"]
@@ -50,10 +50,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.ruff]
 line-length = 100
 select = [
-    "A",
-    "ASYNC100",
-    "ASYNC101",
-    "ASYNC102",
+    "A",    
     "B",
     "BLE",
     "C4",
