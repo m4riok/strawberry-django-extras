@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "strawberry-django-extras"
-version = "0.2.0"
+version = "0.2.1"
 description = "Strawberry GraphQL Django Extras"
 authors = ["Giorgos Gernas <m4riok@gmail.com>"]
 maintainers = ["Giorgos Gernas <m4riok@gmail.com>"]
@@ -50,7 +50,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.ruff]
 line-length = 100
 select = [
-    "A",    
+    "A",
     "B",
     "BLE",
     "C4",
@@ -109,7 +109,7 @@ ignore = [
     "COM819",
     "ISC001",
     "ISC002",
-    "E501"
+    "E501",
 ]
 target-version = "py38"
 exclude = [

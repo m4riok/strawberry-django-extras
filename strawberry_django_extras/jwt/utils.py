@@ -1,6 +1,6 @@
 import asyncio
 from calendar import timegm
-from datetime import datetime
+from datetime import datetime, timezone
 
 import jwt
 from django.contrib.auth import get_user_model
@@ -16,7 +16,7 @@ def jwt_payload(user):
     if hasattr(username, "pk"):
         username = username.pk
 
-    exp = datetime.utcnow() + jwt_settings.JWT_EXPIRATION_DELTA  # noqa: DTZ003
+    exp = datetime.now(timezone.utc) + jwt_settings.JWT_EXPIRATION_DELTA
 
     payload = {
         user.USERNAME_FIELD: username,
@@ -24,7 +24,7 @@ def jwt_payload(user):
     }
 
     if jwt_settings.JWT_ALLOW_REFRESH:
-        payload["origIat"] = timegm(datetime.utcnow().utctimetuple())  # noqa: DTZ003
+        payload["origIat"] = timegm(datetime.now(timezone.utc).utctimetuple())
 
     if jwt_settings.JWT_AUDIENCE is not None:
         payload["aud"] = jwt_settings.JWT_AUDIENCE
@@ -108,7 +108,7 @@ def get_user_by_payload(payload):
 
 def refresh_has_expired(orig_iat):
     exp = orig_iat + jwt_settings.JWT_REFRESH_EXPIRATION_DELTA.total_seconds()
-    return timegm(datetime.utcnow().utctimetuple()) > exp  # noqa: DTZ003
+    return timegm(datetime.now(timezone.utc).utctimetuple()) > exp
 
 
 def is_async() -> bool:
