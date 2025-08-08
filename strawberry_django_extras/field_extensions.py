@@ -195,7 +195,7 @@ class Relationships(FieldExtension):
                     delattr(mutation_input, k)
 
             with await sync_to_async(DjangoOptimizerExtension.disabled)():
-                return await sync_to_async(kill_a_rabbit)(
+                return await sync_to_async(kill_a_rabbit, thread_sensitive=False)(
                     rel,
                     None,
                     False,

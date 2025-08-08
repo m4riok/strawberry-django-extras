@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "strawberry-django-extras"
-version = "0.2.1"
+version = "0.2.2"
 description = "Strawberry GraphQL Django Extras"
 authors = ["Giorgos Gernas <m4riok@gmail.com>"]
 maintainers = ["Giorgos Gernas <m4riok@gmail.com>"]
