@@ -6,6 +6,7 @@ import strawberry_django
 from asgiref.sync import sync_to_async
 from strawberry.extensions import FieldExtension
 from strawberry_django.optimizer import DjangoOptimizerExtension
+from strawberry_django.settings import strawberry_django_settings
 
 from .decorators import is_async, sync_or_async
 from .functions import check_permissions, kill_a_rabbit, perform_validation, rabbit_hole
@@ -32,6 +33,8 @@ class MutationHooks(FieldExtension):
         self.post = post
         self.pre_async = pre_async
         self.post_async = post_async
+        settings = strawberry_django_settings()
+        self.argument_name = settings["MUTATIONS_DEFAULT_ARGUMENT_NAME"]
 
     def apply(self, field: StrawberryDjangoField) -> None:
         if is_async():
@@ -41,12 +44,12 @@ class MutationHooks(FieldExtension):
 
         def resolve(self, next_, source, info, **kwargs):
             if self.pre:
-                self.pre(info, kwargs.get("data", None))
+                self.pre(info, kwargs.get(self.argument_name, None))
 
             result = next_(source, info, **kwargs)
 
             if self.post:
-                self.post(info, kwargs.get("data", None), result)
+                self.post(info, kwargs.get(self.argument_name, None), result)
             return result
 
     else:
@@ -59,16 +62,16 @@ class MutationHooks(FieldExtension):
             **kwargs: Any,
         ) -> Any:
             if self.pre_async:
-                await self.pre_async(info, kwargs.get("data", None))
+                await self.pre_async(info, kwargs.get(self.argument_name, None))
             elif self.pre:
-                await sync_or_async(self.pre)(info, kwargs.get("data", None))
+                await sync_or_async(self.pre)(info, kwargs.get(self.argument_name, None))
 
             result = await next_(source, info, **kwargs)
 
             if self.post_async:
-                await self.post_async(info, kwargs.get("data", None), result)
+                await self.post_async(info, kwargs.get(self.argument_name, None), result)
             elif self.post:
-                await sync_or_async(self.post)(info, kwargs.get("data", None), result)
+                await sync_or_async(self.post)(info, kwargs.get(self.argument_name, None), result)
 
             return result
 
@@ -80,6 +83,8 @@ class Validators(FieldExtension):
         **kwargs,
     ):
         super().__init__(**kwargs)
+        settings = strawberry_django_settings()
+        self.argument_name = settings["MUTATIONS_DEFAULT_ARGUMENT_NAME"]
 
     def apply(self, field: StrawberryDjangoField) -> None:
         if is_async():
@@ -88,7 +93,7 @@ class Validators(FieldExtension):
     if not is_async():
 
         def resolve(self, next_, source, info, **kwargs):
-            mutation_input = kwargs.get("data", None)
+            mutation_input = kwargs.get(self.argument_name, None)
             perform_validation(mutation_input, info)
             return next_(source, info, **kwargs)
 
@@ -101,7 +106,7 @@ class Validators(FieldExtension):
             info: Info,
             **kwargs: Any,
         ) -> Any:
-            mutation_input = kwargs.get("data", None)
+            mutation_input = kwargs.get(self.argument_name, None)
             await sync_to_async(perform_validation)(mutation_input, info)
             return await next_(source, info, **kwargs)
 
@@ -113,6 +118,8 @@ class Permissions(FieldExtension):
         **kwargs,
     ):
         super().__init__(**kwargs)
+        settings = strawberry_django_settings()
+        self.argument_name = settings["MUTATIONS_DEFAULT_ARGUMENT_NAME"]
 
     def apply(self, field: StrawberryDjangoField) -> None:
         if is_async():
@@ -121,7 +128,7 @@ class Permissions(FieldExtension):
     if not is_async():
 
         def resolve(self, next_, source, info, **kwargs):
-            mutation_input = kwargs.get("data", None)
+            mutation_input = kwargs.get(self.argument_name, None)
             check_permissions(mutation_input, info)
             return next_(source, info, **kwargs)
 
@@ -134,7 +141,7 @@ class Permissions(FieldExtension):
             info: Info,
             **kwargs: Any,
         ) -> Any:
-            mutation_input = kwargs.get("data", None)
+            mutation_input = kwargs.get(self.argument_name, None)
             await sync_to_async(check_permissions)(mutation_input, info)
             return await next_(source, info, **kwargs)
 
@@ -148,6 +155,8 @@ class Relationships(FieldExtension):
         **kwargs,
     ):
         super().__init__(**kwargs)
+        settings = strawberry_django_settings()
+        self.argument_name = settings["MUTATIONS_DEFAULT_ARGUMENT_NAME"]
 
     def apply(self, field: StrawberryDjangoField) -> None:
         self.root_field = field
@@ -157,7 +166,7 @@ class Relationships(FieldExtension):
     if not is_async():
 
         def resolve(self, next_, source, info, **kwargs):
-            mutation_input = kwargs.get("data", None)
+            mutation_input = kwargs.get(self.argument_name, None)
             model = self.root_field.django_model
             rel = {}
             rabbit_hole(model, mutation_input, rel)
@@ -186,7 +195,7 @@ class Relationships(FieldExtension):
             info: Info,
             **kwargs: Any,
         ) -> Any:
-            mutation_input = kwargs.get("data", None)
+            mutation_input = kwargs.get(self.argument_name, None)
             model = self.root_field.django_model
             rel = {}
             await sync_to_async(rabbit_hole)(model, mutation_input, rel, None)
