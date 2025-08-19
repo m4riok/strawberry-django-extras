@@ -46,11 +46,11 @@ def kill_a_rabbit(  # noqa: PLR0912, PLR0913, PLR0915
 
     obj = None
     if is_root:
-        obj = next_(source, info, **{argument_name: argument_name})  # noqa: PIE804
+        obj = next_(source, info, **{argument_name: ni})  # noqa: PIE804
         # this is necessary because when I have a nested update input with a OneToOneField down the chain
         # strawberry_django will not update parent object correctly and will have a Traceback in the place
         # of the related One2One object
-        for k, v in data.get(argument_name).items():
+        for k, v in data.get("data").items():
             setattr(obj, k, v)
         obj.save()
 
@@ -60,32 +60,32 @@ def kill_a_rabbit(  # noqa: PLR0912, PLR0913, PLR0915
                 manager = data.get("manager")
                 obj = (
                     manager.create(
-                        **data.get(argument_name),
+                        **data.get("data"),
                         through_defaults=data.get("through_defaults"),
                     )
                     if data.get("through_defaults", None) is not None
-                    else manager.create(**data.get(argument_name))
+                    else manager.create(**data.get("data"))
                 )
             else:
-                obj = data.get("model").objects.create(**data.get(argument_name))
+                obj = data.get("model").objects.create(**data.get("data"))
 
         elif data.get("operation") == "assign":
             if data.get("m2m", False) is True:
                 manager = data.get("manager")
-                if data.get(argument_name).through_defaults is not None:
+                if data.get("data").through_defaults is not None:
                     manager.add(
-                        data.get(argument_name).id,
-                        through_defaults=data.get(argument_name).through_defaults,
+                        data.get("data").id,
+                        through_defaults=data.get("data").through_defaults,
                     )
                 else:
-                    manager.add(data.get(argument_name).id)
-                obj = manager.get(pk=data.get(argument_name).id)
+                    manager.add(data.get("data").id)
+                obj = manager.get(pk=data.get("data").id)
 
         elif data.get("operation") == "update":
             if data.get("m2m", False) is True:
                 manager = data.get("manager")
-                obj = manager.get(pk=data.get(argument_name).get("id"))
-                for k, v in data.get(argument_name).items():
+                obj = manager.get(pk=data.get("data").get("id"))
+                for k, v in data.get("data").items():
                     setattr(obj, k, v)
                 obj.save()
                 if hasattr(manager, "through"):
@@ -103,22 +103,22 @@ def kill_a_rabbit(  # noqa: PLR0912, PLR0913, PLR0915
             else:  # noqa: PLR5501
                 if data.get("manager", None) is not None:
                     obj = data.get("manager").get(pk=data.get("pk"))
-                    for k, v in data.get(argument_name).items():
+                    for k, v in data.get("data").items():
                         setattr(obj, k, v)
                     obj.save()
                 else:
                     obj = data.get("model").objects.get(pk=data.get("pk"))
-                    for k, v in data.get(argument_name).items():
+                    for k, v in data.get("data").items():
                         setattr(obj, k, v)
                     obj.save()
 
         elif data.get("operation") == "remove":
             if data.get("m2m", False) is True:
                 manager = data.get("manager")
-                if data.get(argument_name).get("delete") is True:
-                    manager.get(pk=int(data.get(argument_name).get("id"))).delete()
+                if data.get("data").get("delete") is True:
+                    manager.get(pk=int(data.get("data").get("id"))).delete()
                 else:
-                    manager.remove(data.get(argument_name).get("id"))
+                    manager.remove(data.get("data").get("id"))
 
         elif data.get("operation") == "skip":
             pass
