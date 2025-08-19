@@ -38,6 +38,7 @@ def kill_a_rabbit(  # noqa: PLR0912, PLR0913, PLR0915
     source=None,
     info=None,
     ni=None,
+    argument_name="data",
 ):
     if data.get("before"):
         for item in data.get("before"):
@@ -45,7 +46,7 @@ def kill_a_rabbit(  # noqa: PLR0912, PLR0913, PLR0915
 
     obj = None
     if is_root:
-        obj = next_(source, info, **{"data": ni})  # noqa: PIE804
+        obj = next_(source, info, **{argument_name: ni})  # noqa: PIE804
         # this is necessary because when I have a nested update input with a OneToOneField down the chain
         # strawberry_django will not update parent object correctly and will have a Traceback in the place
         # of the related One2One object
