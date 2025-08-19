@@ -116,13 +116,16 @@ class Validators(FieldExtension):
 class Permissions(FieldExtension):
     argument_name: str
 
-    def __init__(self, field: StrawberryDjangoField) -> None:
-        super().__init__(field)
-        self.argument_name = field.argument_name
+    def __init__(
+        self,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
 
     def apply(self, field: StrawberryDjangoField) -> None:
         if is_async():
             field.is_async = True
+        self.argument_name = field.argument_name
 
     if not is_async():
 
