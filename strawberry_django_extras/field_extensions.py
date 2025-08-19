@@ -6,7 +6,6 @@ import strawberry_django
 from asgiref.sync import sync_to_async
 from strawberry.extensions import FieldExtension
 from strawberry_django.optimizer import DjangoOptimizerExtension
-from strawberry_django.settings import strawberry_django_settings
 
 from .decorators import is_async, sync_or_async
 from .functions import check_permissions, kill_a_rabbit, perform_validation, rabbit_hole
@@ -21,6 +20,8 @@ if TYPE_CHECKING:
 
 # noinspection PyUnresolvedReferences,PyPropertyAccess
 class MutationHooks(FieldExtension):
+    argument_name: str
+
     # noinspection PyUnresolvedReferences
     def __init__(
         self,
@@ -33,12 +34,11 @@ class MutationHooks(FieldExtension):
         self.post = post
         self.pre_async = pre_async
         self.post_async = post_async
-        settings = strawberry_django_settings()
-        self.argument_name = settings["MUTATIONS_DEFAULT_ARGUMENT_NAME"]
 
     def apply(self, field: StrawberryDjangoField) -> None:
         if is_async():
             field.is_async = True
+        self.argument_name = field.argument_name
 
     if not is_async():
 
@@ -78,17 +78,18 @@ class MutationHooks(FieldExtension):
 
 # noinspection PyPropertyAccess
 class Validators(FieldExtension):
+    argument_name: str
+
     def __init__(
         self,
         **kwargs,
     ):
         super().__init__(**kwargs)
-        settings = strawberry_django_settings()
-        self.argument_name = settings["MUTATIONS_DEFAULT_ARGUMENT_NAME"]
 
     def apply(self, field: StrawberryDjangoField) -> None:
         if is_async():
             field.is_async = True
+        self.argument_name = field.argument_name
 
     if not is_async():
 
@@ -113,13 +114,11 @@ class Validators(FieldExtension):
 
 # noinspection PyPropertyAccess
 class Permissions(FieldExtension):
-    def __init__(
-        self,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-        settings = strawberry_django_settings()
-        self.argument_name = settings["MUTATIONS_DEFAULT_ARGUMENT_NAME"]
+    argument_name: str
+
+    def __init__(self, field: StrawberryDjangoField) -> None:
+        super().__init__(field)
+        self.argument_name = field.argument_name
 
     def apply(self, field: StrawberryDjangoField) -> None:
         if is_async():
@@ -149,19 +148,19 @@ class Permissions(FieldExtension):
 # noinspection PyPropertyAccess
 class Relationships(FieldExtension):
     root_field: StrawberryDjangoFieldBase = None
+    argument_name: str
 
     def __init__(
         self,
         **kwargs,
     ):
         super().__init__(**kwargs)
-        settings = strawberry_django_settings()
-        self.argument_name = settings["MUTATIONS_DEFAULT_ARGUMENT_NAME"]
 
     def apply(self, field: StrawberryDjangoField) -> None:
         self.root_field = field
         if is_async():
             field.is_async = True
+        self.argument_name = field.argument_name
 
     if not is_async():
 
@@ -184,6 +183,7 @@ class Relationships(FieldExtension):
                     source=source,
                     info=info,
                     ni=mutation_input,
+                    argument_name=self.argument_name,
                 )
 
     else:
@@ -213,6 +213,7 @@ class Relationships(FieldExtension):
                     source=source,
                     info=info,
                     ni=mutation_input,
+                    default_argument_name=self.argument_name,
                 )
 
 
