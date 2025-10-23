@@ -1,10 +1,24 @@
 from asgiref.sync import iscoroutinefunction, sync_to_async
 from django.contrib import auth
 from django.contrib.auth import authenticate
-from django.http import HttpResponse
+from django.http import JsonResponse
 from django.utils.decorators import sync_and_async_middleware
 
 from strawberry_django_extras.jwt.exceptions import JSONWebTokenError, JSONWebTokenExpired
+
+TOKEN_EXPIRED_ERROR_MESSAGE = "Token expired"
+INVALID_TOKEN_ERROR_MESSAGE = "Invalid token"
+
+
+class ResponseUnauthorized(JsonResponse):
+    status_code = 401
+    def __init__(self, message="Unauthorized"):
+        error = {
+            "message": message,
+            "code": "unauthorized",
+            "hint":  "Either use Valid Token or make requests without token."
+        }
+        super().__init__({"errors": [error]})
 
 
 @sync_and_async_middleware
@@ -19,9 +33,9 @@ def jwt_middleware(get_response):
                     if auth_user is not None:
                         request.user = auth_user
             except JSONWebTokenExpired:
-                return HttpResponse("Token expired", status=401)
+                return ResponseUnauthorized(TOKEN_EXPIRED_ERROR_MESSAGE)
             except JSONWebTokenError:
-                return HttpResponse("Invalid token", status=401)
+                return ResponseUnauthorized(INVALID_TOKEN_ERROR_MESSAGE)
             return await get_response(request)
 
     else:
@@ -34,9 +48,9 @@ def jwt_middleware(get_response):
                     if auth_user is not None:
                         request.user = auth_user
             except JSONWebTokenExpired:
-                return HttpResponse("Token expired", status=401)
+                return ResponseUnauthorized(TOKEN_EXPIRED_ERROR_MESSAGE)
             except JSONWebTokenError:
-                return HttpResponse("Invalid token", status=401)
+                return ResponseUnauthorized(INVALID_TOKEN_ERROR_MESSAGE)
             return get_response(request)
 
     return middleware

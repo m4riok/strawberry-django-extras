@@ -153,3 +153,10 @@ exclude = '''
   | dist
 )/
 '''
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "tests.django_settings"
+testpaths = ["tests"]
+filterwarnings = "ignore:.*is deprecated.*:DeprecationWarning"
+addopts = "--nomigrations --cov=./ --cov-report term-missing:skip-covered"
+asyncio_mode = "auto"
