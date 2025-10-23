@@ -257,7 +257,7 @@ class TotalCountPaginationExtension(FieldExtension):
             return PaginatedList(
                 results=result,
                 total_count=self.get_total_count(
-                    filters=kwargs.get("filters", None),
+                    filters=kwargs.get("filters"),
                     info=info,
                 ),
             )
@@ -275,7 +275,7 @@ class TotalCountPaginationExtension(FieldExtension):
             return PaginatedList(
                 results=result,
                 total_count=self.get_total_count(
-                    filters=kwargs.get("filters", None),
+                    filters=kwargs.get("filters"),
                     info=info,
                 ),
             )

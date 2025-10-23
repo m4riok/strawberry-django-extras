@@ -13,7 +13,7 @@ from strawberry_django_extras.jwt.settings import jwt_settings
 
 # noinspection PyUnusedLocal
 class AbstractRefreshToken(models.Model):
-    id = models.BigAutoField(primary_key=True)  # noqa: A003
+    id = models.BigAutoField(primary_key=True)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

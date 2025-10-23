@@ -18,7 +18,7 @@ class CRUDInput:
     description="Provides the ability to remove a related object with an optional boolean delete to delete the object after the fKey is assigned",
 )
 class CRUDRemoveInput:
-    id: ID  # noqa: A003
+    id: ID
     delete: bool | None = False
 
 
@@ -45,7 +45,7 @@ class CRUDManyToManyItemUpdate(Generic[T_UPDATE]):
     description="Provides through defaults and object IDs to be assigned separately for ManyToMany relationships",
 )
 class CRUDManyToManyID:
-    id: ID  # noqa: A003
+    id: ID
     through_defaults: JSON | None = UNSET
 
 

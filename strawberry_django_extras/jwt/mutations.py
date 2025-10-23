@@ -1,5 +1,3 @@
-from typing import Optional
-
 import strawberry
 from django.contrib.auth import authenticate, get_user_model
 from makefun import with_signature
@@ -22,7 +20,7 @@ if jwt_settings.JWT_LONG_RUNNING_REFRESH_TOKEN:
     )
 
 # including these so auto import cleanup doesn't remove them
-k_junk = Optional[str]
+k_junk = str | None
 l_junk = UNSET
 i_junk = Info
 
@@ -32,8 +30,7 @@ class JWTMutations:
     @strawberry.mutation
     @sync_or_async
     @with_signature(
-        "issue(self, info: Info, %s: Optional[str] = UNSET, password: Optional[str] = UNSET, refresh_token: Optional[str] = UNSET) -> TokenType"
-        % get_user_model().USERNAME_FIELD
+        f"issue(self, info: Info, {get_user_model().USERNAME_FIELD}: Optional[str] = UNSET, password: Optional[str] = UNSET, refresh_token: Optional[str] = UNSET) -> TokenType"
     )
     def issue(self, **kwargs) -> TokenType:  # noqa: PLR0912
         refresh_token = None
@@ -74,7 +71,7 @@ class JWTMutations:
             else:
                 try:
                     user = get_user_by_token(r_token)
-                except Exception as e:  # noqa: BLE001
+                except Exception as e:
                     raise JWTError("Token expired") from e
 
                 token = get_token(user)
@@ -82,7 +79,7 @@ class JWTMutations:
             creds = {get_user_model().USERNAME_FIELD: uname_field, "password": password}
             try:
                 user = authenticate(**creds)
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 raise JWTError("Authentication failure") from e
 
             if user is None:

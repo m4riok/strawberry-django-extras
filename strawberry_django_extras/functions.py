@@ -298,7 +298,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                 )
 
                         else:
-                            raise SDJExtrasError("Invalid field type for %s" % key)
+                            raise SDJExtrasError(f"Invalid field type for {key}")
                     if _rel_input.create is not UNSET:
                         if (
                             isinstance(val, OneToOneRel)
@@ -451,7 +451,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                         )
                         if rel_obj is None:
                             raise SDJExtrasError(
-                                "Cannot update non existing object for key %s" % key,
+                                f"Cannot update non existing object for key {key}",
                             )
                         _rel_input.update.id = rel_obj.pk
                         rel["before"].append(
@@ -493,8 +493,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                         )
                         if rel_objs.count() != len(_rel_input.assign):
                             raise SDJExtrasError(
-                                "Not all assigned objects found for %s"
-                                % val.related_model.__name__,
+                                f"Not all assigned objects found for {val.related_model.__name__}",
                             )
                         rel["assignments"].append(
                             {"assignment_id": val.remote_field.name, "objs": rel_objs},
@@ -517,8 +516,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                         )
                         if rel_objs.count() != len(_rel_input.assign):
                             raise SDJExtrasError(
-                                "Not all assigned objects found for %s"
-                                % val.related_model.__name__,
+                                f"Not all assigned objects found for {val.related_model.__name__}",
                             )
                         rel["assignments"].append(
                             {"assignment_id": val.remote_field.name, "objs": rel_objs},
@@ -596,7 +594,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                         rel_name = val.get_accessor_name()
                     else:
                         raise SDJExtrasError(
-                            "Unable to determine manager for %s" % val.__class__.__name__,
+                            f"Unable to determine manager for {val.__class__.__name__}",
                         )
                     if _rel_input.create is UNSET and _rel_input.assign is UNSET:
                         raise SDJExtrasError("Must create or assign or both")
@@ -643,7 +641,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                         rel_name = val.get_accessor_name()
                     else:
                         raise SDJExtrasError(
-                            "Unable to determine manager for %s" % val.__class__.__name__,
+                            f"Unable to determine manager for {val.__class__.__name__}",
                         )
                     p_obj = val.model.objects.get(pk=int(_input.id))
                     manager = getattr(p_obj, rel_name)
