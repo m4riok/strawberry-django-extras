@@ -4,7 +4,10 @@ from django.contrib.auth import authenticate
 from django.http import JsonResponse
 from django.utils.decorators import sync_and_async_middleware
 
-from strawberry_django_extras.jwt.exceptions import JSONWebTokenError, JSONWebTokenExpired
+from strawberry_django_extras.jwt.exceptions import (
+    JSONWebTokenError,
+    JSONWebTokenExpired,
+)
 
 TOKEN_EXPIRED_ERROR_MESSAGE = "Token expired"
 INVALID_TOKEN_ERROR_MESSAGE = "Invalid token"
@@ -12,11 +15,12 @@ INVALID_TOKEN_ERROR_MESSAGE = "Invalid token"
 
 class ResponseUnauthorized(JsonResponse):
     status_code = 401
+
     def __init__(self, message="Unauthorized"):
         error = {
             "message": message,
             "code": "unauthorized",
-            "hint":  "Either use Valid Token or make requests without token."
+            "hint": "Either use Valid Token or make requests without token.",
         }
         super().__init__({"errors": [error]})
 

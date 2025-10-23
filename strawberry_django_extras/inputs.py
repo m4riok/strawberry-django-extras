@@ -8,7 +8,9 @@ T_CREATE = TypeVar("T_CREATE")
 T_UPDATE = TypeVar("T_UPDATE")
 
 
-@strawberry.input(name="CRUDInput", description="CRUDInput Base Class for all CRUD Inputs")
+@strawberry.input(
+    name="CRUDInput", description="CRUDInput Base Class for all CRUD Inputs"
+)
 class CRUDInput:
     pass
 

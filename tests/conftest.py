@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 User = get_user_model()
 
-@pytest.mark.django_db(transaction=True)
+
 @pytest.fixture
 def user() -> AbstractUser:
     """Create a test user."""
@@ -44,8 +44,7 @@ def graphql_client():
 
 @pytest.fixture(params=["sync", "async", "sync_no_optimizer", "async_no_optimizer"])
 def gql_client(request):
-    """Parameterized GraphQL client supporting sync/async and optimizer on/off.
-    """
+    """Parameterized GraphQL client supporting sync/async and optimizer on/off."""
     from typing import cast
 
     client_class, path, with_optimizer = cast(
@@ -58,7 +57,9 @@ def gql_client(request):
         },
     )[request.param]
 
-    optimizer_ctx = contextlib.nullcontext if with_optimizer else DjangoOptimizerExtension.disabled
+    optimizer_ctx = (
+        contextlib.nullcontext if with_optimizer else DjangoOptimizerExtension.disabled
+    )
 
     with optimizer_ctx(), GraphQLTestClient(path, client_class()) as c:
         yield c

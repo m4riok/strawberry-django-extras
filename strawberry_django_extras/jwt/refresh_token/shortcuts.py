@@ -33,6 +33,8 @@ def get_refresh_token_user(refresh_token):
 
 
 refresh_token_lazy = lazy(
-    lambda user, refresh_token=None: create_refresh_token(user, refresh_token).get_token(),
+    lambda user, refresh_token=None: create_refresh_token(
+        user, refresh_token
+    ).get_token(),
     str,
 )

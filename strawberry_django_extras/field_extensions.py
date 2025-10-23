@@ -66,14 +66,20 @@ class MutationHooks(FieldExtension):
             if self.pre_async:
                 await self.pre_async(info, kwargs.get(self.argument_name, None))
             elif self.pre:
-                await sync_or_async(self.pre)(info, kwargs.get(self.argument_name, None))
+                await sync_or_async(self.pre)(
+                    info, kwargs.get(self.argument_name, None)
+                )
 
             result = await next_(source, info, **kwargs)
 
             if self.post_async:
-                await self.post_async(info, kwargs.get(self.argument_name, None), result)
+                await self.post_async(
+                    info, kwargs.get(self.argument_name, None), result
+                )
             elif self.post:
-                await sync_or_async(self.post)(info, kwargs.get(self.argument_name, None), result)
+                await sync_or_async(self.post)(
+                    info, kwargs.get(self.argument_name, None), result
+                )
 
             return result
 

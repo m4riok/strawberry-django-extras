@@ -87,7 +87,10 @@ class JWTMutations:
 
             token = get_token(user)
 
-            if jwt_settings.JWT_ALLOW_REFRESH and jwt_settings.JWT_LONG_RUNNING_REFRESH_TOKEN:
+            if (
+                jwt_settings.JWT_ALLOW_REFRESH
+                and jwt_settings.JWT_LONG_RUNNING_REFRESH_TOKEN
+            ):
                 new_refresh_token = create_refresh_token(user, None)
                 refresh_token = RefreshTokenType(
                     token=new_refresh_token.token,

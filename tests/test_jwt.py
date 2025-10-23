@@ -41,7 +41,9 @@ ME_QUERY_ALL_FIELDS = """
 
 
 @pytest.mark.django_db(transaction=True)
-def test_valid_token_returns_user_via_graphql_me_query(gql_client: GraphQLTestClient, valid_token: str, user: AbstractUser) -> None:
+def test_valid_token_returns_user_via_graphql_me_query(
+    gql_client: GraphQLTestClient, valid_token: str, user: AbstractUser
+) -> None:
     """Test that a valid JWT token authenticates user via GraphQL me query."""
     response = gql_client.query(
         ME_QUERY_ALL_FIELDS,
@@ -62,7 +64,9 @@ def test_valid_token_returns_user_via_graphql_me_query(gql_client: GraphQLTestCl
         "JWT_ISSUER": "test-issuer",
     }
 )
-def test_valid_token_with_audience_and_issuer(gql_client: GraphQLTestClient, user: Any) -> None:
+def test_valid_token_with_audience_and_issuer(
+    gql_client: GraphQLTestClient, user: Any
+) -> None:
     """Test that JWT with audience and issuer works via GraphQL."""
     jwt_settings.reload()
     token = get_token(user)
@@ -78,7 +82,9 @@ def test_valid_token_with_audience_and_issuer(gql_client: GraphQLTestClient, use
 
 
 @pytest.mark.django_db(transaction=True)
-def test_token_with_invalid_signature_returns_error(gql_client: GraphQLTestClient, user: Any) -> None:
+def test_token_with_invalid_signature_returns_error(
+    gql_client: GraphQLTestClient, user: Any
+) -> None:
     """Test that a JWT token with invalid signature returns error."""
     # Create a token with a different secret key
     payload = {
@@ -126,7 +132,9 @@ def test_token_for_nonexistent_user_returns_null(gql_client: GraphQLTestClient) 
 
 
 @pytest.mark.django_db(transaction=True)
-def test_token_for_inactive_user_returns_error(gql_client: GraphQLTestClient, user: Any) -> None:
+def test_token_for_inactive_user_returns_error(
+    gql_client: GraphQLTestClient, user: Any
+) -> None:
     """Test that a JWT token for an inactive user returns an error."""
     token = get_token(user)
     user.is_active = False
@@ -154,7 +162,9 @@ def test_token_for_inactive_user_returns_error(gql_client: GraphQLTestClient, us
         "this.is.not.a.valid.token",
     ],
 )
-def test_completely_invalid_token_format(gql_client: GraphQLTestClient, invalid_token: str) -> None:
+def test_completely_invalid_token_format(
+    gql_client: GraphQLTestClient, invalid_token: str
+) -> None:
     """Test that completely invalid token formats return an error."""
     # Empty token should not trigger an error (it's like no auth header)
     if invalid_token == "":
@@ -196,10 +206,14 @@ def test_expired_token_returns_error(gql_client: GraphQLTestClient, user: Any) -
     assert response.errors[0]["message"] == TOKEN_EXPIRED_ERROR_MESSAGE
 
 
-
 @pytest.mark.parametrize("verify_expiration", [False, True])
 @pytest.mark.django_db(transaction=True)
-def test_expired_token_accepted_when_verification_disabled(gql_client: GraphQLTestClient, user: AbstractUser, settings: SettingsWrapper, verify_expiration: bool) -> None:
+def test_expired_token_accepted_when_verification_disabled(
+    gql_client: GraphQLTestClient,
+    user: AbstractUser,
+    settings: SettingsWrapper,
+    verify_expiration: bool,
+) -> None:
     """Test that expired tokens work when expiration verification is disabled."""
     settings.GRAPHQL_JWT["JWT_VERIFY_EXPIRATION"] = verify_expiration
     jwt_settings.reload()

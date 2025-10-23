@@ -14,7 +14,6 @@ from strawberry_django.optimizer import (
 UserModel = get_user_model()
 
 
-
 @strawberry_django.type(UserModel)
 class UserType(relay.Node):
     id: relay.NodeID[int]
@@ -28,9 +27,11 @@ class UserType(relay.Node):
     def full_name(self, root: AbstractUser) -> str:
         return f"{root.first_name or ''} {root.last_name or ''}".strip()
 
+
 @strawberry.type
 class Query:
     """All available queries for this schema."""
+
     @strawberry_django.field
     def me(self, info: Info) -> UserType | None:
         user = get_current_user(info, strict=True)

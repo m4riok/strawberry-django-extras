@@ -1,4 +1,3 @@
-
 import strawberry
 from strawberry import UNSET
 
