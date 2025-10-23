@@ -10,8 +10,8 @@ readme = "README.md"
 keywords = ["graphql", "api", "django", "strawberry-graphql"]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<4.0"
-Django = ">=4.0"
+python = ">=3.10,<4.0"
+Django = ">=4.2"
 strawberry-graphql = ">=0.215.1"
 strawberry-graphql-django = ">=0.25.0"
 makefun = ">=1.15.2"
@@ -22,9 +22,9 @@ graphql-core = ">=3.1.5"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.3.3"
-pytest = "^7.1.2"
+pytest = "^7.1"
 pytest-asyncio = "^0.21.0"
-pytest-django = "^4.1.0"
+pytest-django = "^4.11"
 pytest-pythonpath = "^0.7.3"
 pytest-watch = "^4.2.0"
 pytest-mock = "^3.5.1"
@@ -41,7 +41,7 @@ django-types = "^0.18.0"
 Markdown = "^3.3.7"
 Pygments = "^2.15.1"
 factory-boy = "^3.2.1"
-black = "^23.9.1"
+black = "^25.9"
 
 [build-system]
 requires = ["poetry-core>=1.0.0", "setuptools"]
