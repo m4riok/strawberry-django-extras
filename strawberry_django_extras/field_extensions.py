@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Awaitable, Callable
+from typing import TYPE_CHECKING, Any
 
 import strawberry_django
 from asgiref.sync import sync_to_async
@@ -13,6 +13,8 @@ from .inputs import CRUDInput
 from .types import PaginatedList
 
 if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
+
     from strawberry.types import Info
     from strawberry_django.fields.base import StrawberryDjangoFieldBase
     from strawberry_django.fields.field import StrawberryDjangoField

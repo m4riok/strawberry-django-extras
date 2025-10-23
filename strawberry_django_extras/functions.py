@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import List
-
 from django.db import models, transaction
 from django.db.models.fields.related import (
     ForeignKey,
@@ -46,7 +44,7 @@ def kill_a_rabbit(  # noqa: PLR0912, PLR0913, PLR0915
 
     obj = None
     if is_root:
-        obj = next_(source, info, **{argument_name: ni})  # noqa: PIE804
+        obj = next_(source, info, **{argument_name: ni})
         # this is necessary because when I have a nested update input with a OneToOneField down the chain
         # strawberry_django will not update parent object correctly and will have a Traceback in the place
         # of the related One2One object
@@ -199,7 +197,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
             },
         )
         for key, val in fields.items():
-            if isinstance(val, (OneToOneField, OneToOneRel)):
+            if isinstance(val, OneToOneField | OneToOneRel):
                 _rel_input = _input.__dict__.get(key)
                 when = "after" if isinstance(val, OneToOneRel) else "before"
                 if isinstance(_rel_input, CRUDOneToOneCreateInput):
@@ -589,7 +587,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                 },
                             )
 
-            elif isinstance(val, (ManyToManyField, ManyToManyRel)):
+            elif isinstance(val, ManyToManyField | ManyToManyRel):
                 _rel_input = _input.__dict__.get(key)
                 if isinstance(_rel_input, CRUDManyToManyCreateInput):
                     if isinstance(val, ManyToManyField):
@@ -723,7 +721,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
 
 # noinspection DuplicatedCode
 def perform_validation(_input, info):
-    if isinstance(_input, List):
+    if isinstance(_input, list):
         for item in _input:
             perform_validation(item, info)
 
@@ -732,7 +730,7 @@ def perform_validation(_input, info):
         and _input.__strawberry_definition__.is_input is True
     ):
         for v in _input.__dict__.values():
-            if isinstance(v, List):
+            if isinstance(v, list):
                 for item in v:
                     perform_validation(item, info)
 
@@ -762,7 +760,7 @@ def perform_validation(_input, info):
 
 # noinspection DuplicatedCode
 def check_permissions(_input, info):
-    if isinstance(_input, List):
+    if isinstance(_input, list):
         for item in _input:
             check_permissions(item, info)
 
@@ -771,7 +769,7 @@ def check_permissions(_input, info):
         and _input.__strawberry_definition__.is_input is True
     ):
         for v in _input.__dict__.values():
-            if isinstance(v, List):
+            if isinstance(v, list):
                 for item in v:
                     check_permissions(item, info)
 
