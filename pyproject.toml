@@ -12,12 +12,12 @@ keywords = ["graphql", "api", "django", "strawberry-graphql"]
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
 Django = ">=4.2"
-strawberry-graphql = ">=0.215.1"
-strawberry-graphql-django = ">=0.25.0"
+strawberry-graphql = ">=0.283.2"
+strawberry-graphql-django = ">=0.66.0"
 makefun = ">=1.15.2"
 PyJWT = ">=2.1.0"
 cryptography = ">=38.0"
-graphql-core = ">=3.1.5"
+graphql-core = ">=3.2.0"
 
 
 [tool.poetry.group.dev.dependencies]
