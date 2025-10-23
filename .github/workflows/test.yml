@@ -17,73 +17,6 @@ on:
       - ".github/workflows/test.yml"
 
 jobs:
-  generate-jobs-tests:
-    name: 💻 Generate test matrix
-    runs-on: ubuntu-latest
-    outputs:
-      sessions: ${{ steps.set-matrix.outputs.sessions }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
-      - run: uv venv
-      - run: uv pip install poetry nox nox-poetry
-      - id: set-matrix
-        shell: bash
-        run: |
-          . .venv/bin/activate
-          echo sessions=$(
-            nox --json -t tests -l |
-            jq 'map(
-              {
-                session,
-                name: "\( .name ) on \( .python )\( if .call_spec != {} then " (\(.call_spec | to_entries | map("\(.key)=\(.value)") | join(", ")))" else "" end )"
-              }
-            )'
-          ) | tee --append $GITHUB_OUTPUT
-
-  unit-tests:
-    name: 🔬 ${{ matrix.session.name }}
-    needs: [generate-jobs-tests]
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        session: ${{ fromJson(needs.generate-jobs-tests.outputs.sessions) }}
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: |
-            3.10
-            3.11
-            3.12
-            3.13
-            3.14
-
-      - run: pip install poetry nox nox-poetry uv
-      - run: nox -r -t tests -s "${{ matrix.session.session }}"
-      - uses: actions/upload-artifact@v4
-        if: ${{ always() }}
-        with:
-          name: coverage-${{ matrix.session.session }}
-          path: coverage.xml
-
-  
-  # upload-coverage:
-  #   name: 🆙 Upload Coverage
-  #   needs: [unit-tests]
-  #   runs-on: ubuntu-latest
-
-  #   steps:
-  #     - uses: actions/download-artifact@v4
-  #     - uses: codecov/codecov-action@v4
-  #       with:
-  #         token: ${{ secrets.CODECOV_TOKEN }}
-  #         fail_ci_if_error: true
-  #         verbose: true
-
   lint:
     name: ✨ Lint & Type Check
     runs-on: ubuntu-latest
@@ -101,3 +34,52 @@ jobs:
       # Update output format to enable automatic inline annotations.
       - name: Run Ruff
         run: ruff check --output-format=github .
+
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        django-version:
+          - 4.2.*
+          - 5.0.*
+          - 5.1.*
+          - 5.2.*
+        python-version:
+          - '3.10'
+          - '3.11'
+          - '3.12'
+          - '3.13'
+          - '3.14'
+        include:
+          # Django 4.2 only supports python 3.8-3.12
+          - django-version: 4.2.*
+            python-version: '3.8'
+        exclude:
+          # Django 4.2 only supports python 3.8-3.12
+          - django-version: 4.2.*
+            python-version: '3.13'
+          # Django 5.0 only supports python 3.10-3.12
+          - django-version: 5.0.*
+            python-version: '3.13'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Poetry
+        run: pipx install poetry
+      - name: Set up Python ${{ matrix.python-version }}
+        id: setup-python
+        uses: actions/setup-python@v5
+        with:
+          cache: poetry
+          python-version: ${{ matrix.python-version }}
+      - name: Install Deps
+        run: poetry install
+      - name: Install Django ${{ matrix.django-version }}
+        run: poetry run pip install "django==${{ matrix.django-version }}"
+      - name: Test with pytest
+        run: poetry run pytest -n auto --showlocals -vvv --cov-report=xml
+      # - name: Upload coverage to Codecov
+      #   uses: codecov/codecov-action@v5
+      #   env:
+      #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
