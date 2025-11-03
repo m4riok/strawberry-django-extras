@@ -41,6 +41,9 @@ DEFAULTS = {
     ),
     "JWT_AUTHENTICATE_INTROSPECTION": True,
     "JWT_CSRF_ROTATION": False,
+    "JWT_UNAUTHORIZED_RESPONSE_HANDLER": (
+        "strawberry_django_extras.jwt.response_handlers.http_response_handler"
+    ),
 }
 
 IMPORT_STRINGS = (
@@ -51,7 +54,7 @@ IMPORT_STRINGS = (
     "JWT_GET_USER_BY_NATURAL_KEY_HANDLER",
     "JWT_REFRESH_EXPIRED_HANDLER",
     "JWT_GET_REFRESH_TOKEN_HANDLER",
-    "JWT_AUTHENTICATE_INTROSPECTION",
+    "JWT_UNAUTHORIZED_RESPONSE_HANDLER",
 )
 
 

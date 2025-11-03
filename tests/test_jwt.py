@@ -6,9 +6,9 @@ from typing import TYPE_CHECKING, Any
 import jwt
 import pytest
 from django.contrib.auth import get_user_model
-from django.test import override_settings
+from django.test import Client, override_settings
 
-from strawberry_django_extras.jwt.middleware import (
+from strawberry_django_extras.jwt.response_handlers import (
     INVALID_TOKEN_ERROR_MESSAGE,
     TOKEN_EXPIRED_ERROR_MESSAGE,
 )
@@ -62,6 +62,9 @@ def test_valid_token_returns_user_via_graphql_me_query(
     GRAPHQL_JWT={
         "JWT_AUDIENCE": "test-audience",
         "JWT_ISSUER": "test-issuer",
+        "JWT_UNAUTHORIZED_RESPONSE_HANDLER": (
+            "strawberry_django_extras.jwt.response_handlers.json_response_handler"
+        ),
     }
 )
 def test_valid_token_with_audience_and_issuer(
@@ -186,6 +189,9 @@ def test_completely_invalid_token_format(
     GRAPHQL_JWT={
         "JWT_VERIFY_EXPIRATION": True,
         "JWT_EXPIRATION_DELTA": timedelta(seconds=-1),  # Already expired
+        "JWT_UNAUTHORIZED_RESPONSE_HANDLER": (
+            "strawberry_django_extras.jwt.response_handlers.json_response_handler"
+        ),
     }
 )
 def test_expired_token_returns_error(gql_client: GraphQLTestClient, user: Any) -> None:
@@ -239,3 +245,61 @@ def test_expired_token_accepted_when_verification_disabled(
         assert response.data is not None
         assert response.data["me"] is not None
         assert response.data["me"]["username"] == user.username
+
+
+# Custom Response Handler Tests
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.parametrize(
+    ("handler_path", "content_type"),
+    [
+        (
+            "strawberry_django_extras.jwt.response_handlers.http_response_handler",
+            "text/plain",
+        ),
+        (
+            "strawberry_django_extras.jwt.response_handlers.json_response_handler",
+            "application/json",
+        ),
+    ],
+)
+def test_custom_response_handlers(
+    user: Any,
+    settings: SettingsWrapper,
+    handler_path: str,
+    content_type: str,
+) -> None:
+    """Test different response handlers return appropriate responses."""
+    settings.GRAPHQL_JWT["JWT_UNAUTHORIZED_RESPONSE_HANDLER"] = handler_path
+    jwt_settings.reload()
+    # Create an invalid token
+    invalid_token = jwt.encode(
+        {
+            User.USERNAME_FIELD: user.get_username(),
+            "exp": datetime.now(timezone.utc) + timedelta(hours=1),
+        },
+        "wrong-secret",
+        algorithm="HS256",
+    )
+    client = Client()
+
+    response = client.post(
+        "/graphql/",
+        data={"query": ME_QUERY_ALL_FIELDS},
+        content_type="application/json",
+        HTTP_AUTHORIZATION=f"JWT {invalid_token}",
+    )
+
+    assert response.status_code == 401
+    assert response["Content-Type"] == content_type
+    # Validate response content based on handler type
+    if content_type == "text/plain":
+        assert b"Invalid token" in response.content
+    elif content_type == "application/json":
+        data = response.json()
+        assert "errors" in data
+        assert len(data["errors"]) == 1
+        assert data["errors"][0]["message"] == "Invalid token"
+        assert data["errors"][0]["code"] == "unauthorized"
+        assert data["errors"][0]["hint"] == "Either use Valid Token or make requests without token."

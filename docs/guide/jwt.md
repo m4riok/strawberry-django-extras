@@ -111,3 +111,58 @@ Prefix for the HTTP header used for authentication. Defaults to `JWT`.
 
 ### JWT_AUTHENTICATE_INTROSPECTION
 Limits introspection to authenticated users. Defaults to `False`.
+
+### JWT_UNAUTHORIZED_RESPONSE_HANDLER
+Function used to handle unauthorized JWT authentication failures. This allows customization of the response format returned when JWT authentication fails (e.g., invalid token, expired token).
+
+The handler should accept the following parameters:
+- `request` (HttpRequest): The Django request object that triggered the authentication failure
+- `exception` (Exception): The exception instance that was raised (e.g., `JSONWebTokenExpired`, `JSONWebTokenError`)
+
+The handler determines the error message based on the exception type. Use `isinstance(exception, JSONWebTokenExpired)` to distinguish between expired and invalid tokens.
+
+**Available built-in handlers:**
+
+- `strawberry_django_extras.jwt.response_handlers.json_response_handler` - Returns a structured JSON response with error details (default)
+- `strawberry_django_extras.jwt.response_handlers.http_response_handler` - Returns a plain text HTTP response
+
+**Example:**
+
+```python
+GRAPHQL_JWT = {
+    'JWT_UNAUTHORIZED_RESPONSE_HANDLER': 'strawberry_django_extras.jwt.response_handlers.json_response_handler',
+}
+```
+
+**Custom handler example:**
+
+```python
+from django.http import HttpRequest, JsonResponse
+from strawberry_django_extras.jwt.exceptions import JSONWebTokenExpired
+
+def custom_response_handler(
+    request: HttpRequest,
+    exception: Exception,
+    **kwargs
+) -> JsonResponse:
+    # Determine message based on exception type
+    if isinstance(exception, JSONWebTokenExpired):
+        message = "Your session has expired. Please log in again."
+    else:
+        message = "Authentication failed. Please check your credentials."
+
+    # Build response with request context
+    response_data = {
+        'error': message,
+        'status': 'unauthorized',
+        'path': request.path,
+        'exception_type': exception.__class__.__name__,
+    }
+
+    return JsonResponse(response_data, status=401)
+
+# In settings:
+GRAPHQL_JWT = {
+    'JWT_UNAUTHORIZED_RESPONSE_HANDLER': 'myapp.handlers.custom_response_handler',
+}
+```

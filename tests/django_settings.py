@@ -53,6 +53,9 @@ GRAPHQL_JWT = {
     "JWT_VERIFY_EXPIRATION": False,  # Default to False for most tests
     "JWT_EXPIRATION_DELTA": timedelta(minutes=5),
     "JWT_ALLOW_REFRESH": False,  # Default to False, individual tests can override
+    "JWT_UNAUTHORIZED_RESPONSE_HANDLER": (
+        "strawberry_django_extras.jwt.response_handlers.json_response_handler"
+    ),
 }
 
 CACHES = {
