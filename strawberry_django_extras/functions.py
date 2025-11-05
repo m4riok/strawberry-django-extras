@@ -200,7 +200,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
             },
         )
         for key, val in fields.items():
-            if isinstance(val, OneToOneField | OneToOneRel):
+            if isinstance(val, (OneToOneField, OneToOneRel)):
                 _rel_input = _input.__dict__.get(key)
                 when = "after" if isinstance(val, OneToOneRel) else "before"
                 if isinstance(_rel_input, CRUDOneToOneCreateInput):
@@ -614,7 +614,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                 },
                             )
 
-            elif isinstance(val, ManyToManyField | ManyToManyRel):
+            elif isinstance(val, (ManyToManyField, ManyToManyRel)):
                 _rel_input = _input.__dict__.get(key)
                 if isinstance(_rel_input, CRUDManyToManyCreateInput):
                     if isinstance(val, ManyToManyField):

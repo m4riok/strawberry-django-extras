@@ -126,6 +126,7 @@ ignore = [
     "ISC001",
     "ISC002",
     "E501",
+    "UP045",
 ]
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["A003", "PLW0603", "PLR2004"]

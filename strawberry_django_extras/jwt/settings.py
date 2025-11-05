@@ -61,7 +61,7 @@ IMPORT_STRINGS = (
 def perform_import(value, setting_name):
     if isinstance(value, str):
         return import_from_string(value, setting_name)
-    if isinstance(value, list | tuple):
+    if isinstance(value, (list, tuple)):
         return [import_from_string(item, setting_name) for item in value]
     return value
 

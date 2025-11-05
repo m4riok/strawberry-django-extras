@@ -1,3 +1,5 @@
+from typing import Optional
+
 import strawberry
 from django.contrib.auth import authenticate, get_user_model
 from makefun import with_signature
@@ -20,7 +22,7 @@ if jwt_settings.JWT_LONG_RUNNING_REFRESH_TOKEN:
     )
 
 # including these so auto import cleanup doesn't remove them
-k_junk = str | None
+k_junk = Optional[str]
 l_junk = UNSET
 i_junk = Info
 
