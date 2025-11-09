@@ -46,12 +46,12 @@ class MutationHooks(FieldExtension):
 
         def resolve(self, next_, source, info, **kwargs):
             if self.pre:
-                self.pre(info, kwargs.get(self.argument_name, None))
+                self.pre(info, kwargs.get(self.argument_name))
 
             result = next_(source, info, **kwargs)
 
             if self.post:
-                self.post(info, kwargs.get(self.argument_name, None), result)
+                self.post(info, kwargs.get(self.argument_name), result)
             return result
 
     else:
@@ -64,22 +64,16 @@ class MutationHooks(FieldExtension):
             **kwargs: Any,
         ) -> Any:
             if self.pre_async:
-                await self.pre_async(info, kwargs.get(self.argument_name, None))
+                await self.pre_async(info, kwargs.get(self.argument_name))
             elif self.pre:
-                await sync_or_async(self.pre)(
-                    info, kwargs.get(self.argument_name, None)
-                )
+                await sync_or_async(self.pre)(info, kwargs.get(self.argument_name))
 
             result = await next_(source, info, **kwargs)
 
             if self.post_async:
-                await self.post_async(
-                    info, kwargs.get(self.argument_name, None), result
-                )
+                await self.post_async(info, kwargs.get(self.argument_name), result)
             elif self.post:
-                await sync_or_async(self.post)(
-                    info, kwargs.get(self.argument_name, None), result
-                )
+                await sync_or_async(self.post)(info, kwargs.get(self.argument_name), result)
 
             return result
 
@@ -102,7 +96,7 @@ class Validators(FieldExtension):
     if not is_async():
 
         def resolve(self, next_, source, info, **kwargs):
-            mutation_input = kwargs.get(self.argument_name, None)
+            mutation_input = kwargs.get(self.argument_name)
             perform_validation(mutation_input, info)
             return next_(source, info, **kwargs)
 
@@ -115,7 +109,7 @@ class Validators(FieldExtension):
             info: Info,
             **kwargs: Any,
         ) -> Any:
-            mutation_input = kwargs.get(self.argument_name, None)
+            mutation_input = kwargs.get(self.argument_name)
             await sync_to_async(perform_validation)(mutation_input, info)
             return await next_(source, info, **kwargs)
 
@@ -138,7 +132,7 @@ class Permissions(FieldExtension):
     if not is_async():
 
         def resolve(self, next_, source, info, **kwargs):
-            mutation_input = kwargs.get(self.argument_name, None)
+            mutation_input = kwargs.get(self.argument_name)
             check_permissions(mutation_input, info)
             return next_(source, info, **kwargs)
 
@@ -151,7 +145,7 @@ class Permissions(FieldExtension):
             info: Info,
             **kwargs: Any,
         ) -> Any:
-            mutation_input = kwargs.get(self.argument_name, None)
+            mutation_input = kwargs.get(self.argument_name)
             await sync_to_async(check_permissions)(mutation_input, info)
             return await next_(source, info, **kwargs)
 
@@ -176,7 +170,7 @@ class Relationships(FieldExtension):
     if not is_async():
 
         def resolve(self, next_, source, info, **kwargs):
-            mutation_input = kwargs.get(self.argument_name, None)
+            mutation_input = kwargs.get(self.argument_name)
             model = self.root_field.django_model
             rel = {}
             rabbit_hole(model, mutation_input, rel)
@@ -206,7 +200,7 @@ class Relationships(FieldExtension):
             info: Info,
             **kwargs: Any,
         ) -> Any:
-            mutation_input = kwargs.get(self.argument_name, None)
+            mutation_input = kwargs.get(self.argument_name)
             model = self.root_field.django_model
             rel = {}
             await sync_to_async(rabbit_hole)(model, mutation_input, rel, None)
@@ -224,7 +218,7 @@ class Relationships(FieldExtension):
                     source=source,
                     info=info,
                     ni=mutation_input,
-                    default_argument_name=self.argument_name,
+                    argument_name=self.argument_name,
                 )
 
 
