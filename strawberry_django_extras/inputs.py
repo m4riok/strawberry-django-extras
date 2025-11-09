@@ -1,4 +1,4 @@
-from typing import Generic, List, Optional, TypeVar, Union
+from typing import Generic, TypeVar
 
 import strawberry
 from strawberry import ID, UNSET
@@ -8,7 +8,9 @@ T_CREATE = TypeVar("T_CREATE")
 T_UPDATE = TypeVar("T_UPDATE")
 
 
-@strawberry.input(name="CRUDInput", description="CRUDInput Base Class for all CRUD Inputs")
+@strawberry.input(
+    name="CRUDInput", description="CRUDInput Base Class for all CRUD Inputs"
+)
 class CRUDInput:
     pass
 
@@ -18,8 +20,8 @@ class CRUDInput:
     description="Provides the ability to remove a related object with an optional boolean delete to delete the object after the fKey is assigned",
 )
 class CRUDRemoveInput:
-    id: ID  # noqa: A003
-    delete: Optional[bool] = False
+    id: ID
+    delete: bool | None = False
 
 
 @strawberry.input(
@@ -28,7 +30,7 @@ class CRUDRemoveInput:
 )
 class CRUDManyToManyItem(Generic[T_CREATE]):
     object_data: T_CREATE
-    through_defaults: Optional[JSON] = UNSET
+    through_defaults: JSON | None = UNSET
 
 
 @strawberry.input(
@@ -37,7 +39,7 @@ class CRUDManyToManyItem(Generic[T_CREATE]):
 )
 class CRUDManyToManyItemUpdate(Generic[T_UPDATE]):
     object_data: T_UPDATE
-    through_defaults: Optional[JSON] = UNSET
+    through_defaults: JSON | None = UNSET
 
 
 @strawberry.input(
@@ -45,8 +47,8 @@ class CRUDManyToManyItemUpdate(Generic[T_UPDATE]):
     description="Provides through defaults and object IDs to be assigned separately for ManyToMany relationships",
 )
 class CRUDManyToManyID:
-    id: ID  # noqa: A003
-    through_defaults: Optional[JSON] = UNSET
+    id: ID
+    through_defaults: JSON | None = UNSET
 
 
 # CREATE INPUTS
@@ -55,8 +57,8 @@ class CRUDManyToManyID:
     description="Used for OneToOne relationships when creating an object. Allows to either create nested objects or assign existing objects to the newly created object.",
 )
 class CRUDOneToOneCreateInput(CRUDInput, Generic[T_CREATE]):
-    create: Optional[T_CREATE] = UNSET
-    assign: Optional[ID] = UNSET
+    create: T_CREATE | None = UNSET
+    assign: ID | None = UNSET
 
 
 @strawberry.input(
@@ -64,8 +66,8 @@ class CRUDOneToOneCreateInput(CRUDInput, Generic[T_CREATE]):
     description="Used for ManyToOne relationships when creating an object. Allows to either create nested objects or assign existing objects to the newly created object.",
 )
 class CRUDManyToOneCreateInput(CRUDInput, Generic[T_CREATE]):
-    create: Optional[List[T_CREATE]] = UNSET
-    assign: Optional[List[ID]] = UNSET
+    create: list[T_CREATE] | None = UNSET
+    assign: list[ID] | None = UNSET
 
 
 @strawberry.input(
@@ -73,8 +75,8 @@ class CRUDManyToOneCreateInput(CRUDInput, Generic[T_CREATE]):
     description="Used for OneToMany relationships when creating an object. Allows to either create nested objects or assign existing objects to the newly created object.",
 )
 class CRUDOneToManyCreateInput(CRUDInput, Generic[T_CREATE]):
-    create: Optional[T_CREATE] = UNSET
-    assign: Optional[ID] = UNSET
+    create: T_CREATE | None = UNSET
+    assign: ID | None = UNSET
 
 
 @strawberry.input(
@@ -82,8 +84,8 @@ class CRUDOneToManyCreateInput(CRUDInput, Generic[T_CREATE]):
     description="Used for ManyToMany relationships when creating an object. Allows to either create nested objects or assign existing objects to the newly created object.",
 )
 class CRUDManyToManyCreateInput(CRUDInput, Generic[T_CREATE]):
-    create: Optional[List[CRUDManyToManyItem[T_CREATE]]] = UNSET
-    assign: Optional[List[CRUDManyToManyID]] = UNSET
+    create: list[CRUDManyToManyItem[T_CREATE]] | None = UNSET
+    assign: list[CRUDManyToManyID] | None = UNSET
 
 
 # UPDATE INPUTS
@@ -94,10 +96,10 @@ class CRUDManyToManyCreateInput(CRUDInput, Generic[T_CREATE]):
     description="Used for OneToOne relationships when updating an object. Supports nested creation, assignment to object or null if the field is nullable, updates to the data of existing related objects and an optional delete flag to delete the previously assigned object in case of reassignment.",
 )
 class CRUDOneToOneUpdateInput(CRUDInput, Generic[T_CREATE, T_UPDATE]):
-    create: Optional[T_CREATE] = UNSET
-    assign: Optional[Union[ID, None]] = UNSET
-    update: Optional[T_UPDATE] = UNSET
-    delete: Optional[bool] = False
+    create: T_CREATE | None = UNSET
+    assign: ID | None = UNSET
+    update: T_UPDATE | None = UNSET
+    delete: bool | None = False
 
 
 @strawberry.input(
@@ -105,10 +107,10 @@ class CRUDOneToOneUpdateInput(CRUDInput, Generic[T_CREATE, T_UPDATE]):
     description="Used for OneToMany relationships when updating an object. Supports nested creation, assignment to object or null if the field is nullable, updates to the data of existing related objects and an optional delete flag to delete the previously assigned object in case of reassignment.",
 )
 class CRUDOneToManyUpdateInput(CRUDInput, Generic[T_CREATE, T_UPDATE]):
-    create: Optional[T_CREATE] = UNSET
-    assign: Optional[Union[ID, None]] = UNSET
-    update: Optional[T_UPDATE] = UNSET
-    delete: Optional[bool] = False
+    create: T_CREATE | None = UNSET
+    assign: ID | None = UNSET
+    update: T_UPDATE | None = UNSET
+    delete: bool | None = False
 
 
 @strawberry.input(
@@ -116,10 +118,10 @@ class CRUDOneToManyUpdateInput(CRUDInput, Generic[T_CREATE, T_UPDATE]):
     description="Used for ManyToOne relationships when updating an object. Supports nested creation, assignment of objects, updates to the data of existing related objects (IDs must be provided by the Input) and removal of related with an optional delete flag to delete the previously assigned objects.",
 )
 class CRUDManyToOneUpdateInput(CRUDInput, Generic[T_CREATE, T_UPDATE]):
-    create: Optional[List[T_CREATE]] = UNSET
-    update: Optional[List[T_UPDATE]] = UNSET
-    assign: Optional[List[ID]] = UNSET
-    remove: Optional[List[CRUDRemoveInput]] = UNSET
+    create: list[T_CREATE] | None = UNSET
+    update: list[T_UPDATE] | None = UNSET
+    assign: list[ID] | None = UNSET
+    remove: list[CRUDRemoveInput] | None = UNSET
 
 
 @strawberry.input(
@@ -127,7 +129,7 @@ class CRUDManyToOneUpdateInput(CRUDInput, Generic[T_CREATE, T_UPDATE]):
     description="Used for ManyToMany relationships when updating an object. Supports nested creation, assignment of objects, updates to the data of existing related objects (IDs must be provided by the Input) and removal of related with an optional delete flag to delete the previously assigned objects.",
 )
 class CRUDManyToManyUpdateInput(CRUDInput, Generic[T_CREATE, T_UPDATE]):
-    create: Optional[List[CRUDManyToManyItem[T_CREATE]]] = UNSET
-    update: Optional[List[CRUDManyToManyItemUpdate[T_UPDATE]]] = UNSET
-    assign: Optional[List[CRUDManyToManyID]] = UNSET
-    remove: Optional[List[CRUDRemoveInput]] = UNSET
+    create: list[CRUDManyToManyItem[T_CREATE]] | None = UNSET
+    update: list[CRUDManyToManyItemUpdate[T_UPDATE]] | None = UNSET
+    assign: list[CRUDManyToManyID] | None = UNSET
+    remove: list[CRUDRemoveInput] | None = UNSET

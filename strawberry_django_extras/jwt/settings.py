@@ -27,14 +27,23 @@ DEFAULTS = {
     "JWT_ENCODE_HANDLER": "strawberry_django_extras.jwt.utils.jwt_encode",
     "JWT_DECODE_HANDLER": "strawberry_django_extras.jwt.utils.jwt_decode",
     "JWT_PAYLOAD_HANDLER": "strawberry_django_extras.jwt.utils.jwt_payload",
-    "JWT_PAYLOAD_GET_USERNAME_HANDLER": (
-        lambda payload: payload.get(get_user_model().USERNAME_FIELD)
+    "JWT_PAYLOAD_GET_USERNAME_HANDLER": lambda payload: payload.get(
+        get_user_model().USERNAME_FIELD
     ),
-    "JWT_GET_USER_BY_NATURAL_KEY_HANDLER": "strawberry_django_extras.jwt.utils.get_user_by_natural_key",
-    "JWT_REFRESH_EXPIRED_HANDLER": "strawberry_django_extras.jwt.utils.refresh_has_expired",
-    "JWT_GET_REFRESH_TOKEN_HANDLER": "strawberry_django_extras.jwt.refresh_token.utils.get_refresh_token_by_model",
+    "JWT_GET_USER_BY_NATURAL_KEY_HANDLER": (
+        "strawberry_django_extras.jwt.utils.get_user_by_natural_key"
+    ),
+    "JWT_REFRESH_EXPIRED_HANDLER": (
+        "strawberry_django_extras.jwt.utils.refresh_has_expired"
+    ),
+    "JWT_GET_REFRESH_TOKEN_HANDLER": (
+        "strawberry_django_extras.jwt.refresh_token.utils.get_refresh_token_by_model"
+    ),
     "JWT_AUTHENTICATE_INTROSPECTION": True,
     "JWT_CSRF_ROTATION": False,
+    "JWT_UNAUTHORIZED_RESPONSE_HANDLER": (
+        "strawberry_django_extras.jwt.response_handlers.http_response_handler"
+    ),
 }
 
 IMPORT_STRINGS = (
@@ -45,7 +54,7 @@ IMPORT_STRINGS = (
     "JWT_GET_USER_BY_NATURAL_KEY_HANDLER",
     "JWT_REFRESH_EXPIRED_HANDLER",
     "JWT_GET_REFRESH_TOKEN_HANDLER",
-    "JWT_AUTHENTICATE_INTROSPECTION",
+    "JWT_UNAUTHORIZED_RESPONSE_HANDLER",
 )
 
 

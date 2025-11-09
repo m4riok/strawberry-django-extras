@@ -32,8 +32,7 @@ class JWTMutations:
     @strawberry.mutation
     @sync_or_async
     @with_signature(
-        "issue(self, info: Info, %s: Optional[str] = UNSET, password: Optional[str] = UNSET, refresh_token: Optional[str] = UNSET) -> TokenType"
-        % get_user_model().USERNAME_FIELD
+        f"issue(self, info: Info, {get_user_model().USERNAME_FIELD}: Optional[str] = UNSET, password: Optional[str] = UNSET, refresh_token: Optional[str] = UNSET) -> TokenType"
     )
     def issue(self, **kwargs) -> TokenType:  # noqa: PLR0912
         refresh_token = None
@@ -74,7 +73,7 @@ class JWTMutations:
             else:
                 try:
                     user = get_user_by_token(r_token)
-                except Exception as e:  # noqa: BLE001
+                except Exception as e:
                     raise JWTError("Token expired") from e
 
                 token = get_token(user)
@@ -82,7 +81,7 @@ class JWTMutations:
             creds = {get_user_model().USERNAME_FIELD: uname_field, "password": password}
             try:
                 user = authenticate(**creds)
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 raise JWTError("Authentication failure") from e
 
             if user is None:
@@ -90,7 +89,10 @@ class JWTMutations:
 
             token = get_token(user)
 
-            if jwt_settings.JWT_ALLOW_REFRESH and jwt_settings.JWT_LONG_RUNNING_REFRESH_TOKEN:
+            if (
+                jwt_settings.JWT_ALLOW_REFRESH
+                and jwt_settings.JWT_LONG_RUNNING_REFRESH_TOKEN
+            ):
                 new_refresh_token = create_refresh_token(user, None)
                 refresh_token = RefreshTokenType(
                     token=new_refresh_token.token,

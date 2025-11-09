@@ -1,5 +1,3 @@
-from typing import Optional
-
 import strawberry
 from strawberry import UNSET
 
@@ -14,7 +12,7 @@ class RefreshTokenType:
 @strawberry.type
 class TokenType:
     token: str
-    refresh_token: Optional[RefreshTokenType] = UNSET
+    refresh_token: RefreshTokenType | None = UNSET
 
 
 @strawberry.type

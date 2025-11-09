@@ -10,38 +10,39 @@ readme = "README.md"
 keywords = ["graphql", "api", "django", "strawberry-graphql"]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<4.0"
-Django = ">=4.0"
-strawberry-graphql = ">=0.215.1"
-strawberry-graphql-django = ">=0.25.0"
+python = ">=3.10,<4.0"
+Django = ">=4.2"
+strawberry-graphql = ">=0.283.2"
+strawberry-graphql-django = ">=0.66.0"
 makefun = ">=1.15.2"
 PyJWT = ">=2.1.0"
 cryptography = ">=38.0"
-graphql-core = ">=3.1.5"
+graphql-core = ">=3.2.0"
 
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.3.3"
-pytest = "^7.1.2"
-pytest-asyncio = "^0.21.0"
-pytest-django = "^4.1.0"
+pytest = "^8.0.2"
+pytest-asyncio = "^1.0.0"
+pytest-django = "^4.11"
 pytest-pythonpath = "^0.7.3"
 pytest-watch = "^4.2.0"
 pytest-mock = "^3.5.1"
 pytest-snapshot = "^0.9.0"
 pytest-cov = "^4.0.0"
+pytest-xdist = "^3.8.0"
 mkdocs = "^1.4.2"
 mkdocs-markdownextradata-plugin = "^0.2.5"
 mkdocs-material = "^9.0.4"
 mkdocs-minify-plugin = "^0.7.1"
 pymdown-extensions = "^10.0.1"
 mkdocstrings = { version = "^0.23.0", extras = ["python"] }
-ruff = "^0.1.6"
-django-types = "^0.18.0"
+ruff = "^0.14.1"
+django-types = "^0.22.0"
 Markdown = "^3.3.7"
 Pygments = "^2.15.1"
 factory-boy = "^3.2.1"
-black = "^23.9.1"
+black = "^25.9"
 
 [build-system]
 requires = ["poetry-core>=1.0.0", "setuptools"]
@@ -49,6 +50,21 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
 line-length = 100
+target-version = "py310"
+[tool.ruff.lint]
+exclude = [
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".tox",
+    ".venv",
+    "__pycached__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+]
 select = [
     "A",
     "B",
@@ -110,28 +126,15 @@ ignore = [
     "ISC001",
     "ISC002",
     "E501",
+    "UP045",
 ]
-target-version = "py38"
-exclude = [
-    ".eggs",
-    ".git",
-    ".hg",
-    ".mypy_cache",
-    ".tox",
-    ".venv",
-    "__pycached__",
-    "_build",
-    "buck-out",
-    "build",
-    "dist",
-]
-[tool.ruff.format]
-exclude = ["**/migrations/*"]
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "tests/*" = ["A003", "PLW0603", "PLR2004"]
 "examples/*" = ["A003"]
 "**/migrations/*" = ["RUF012", "E501", "Q000", "I001", "COM812"]
 "asp/*" = ["N999"]
+[tool.ruff.format]
+exclude = ["**/migrations/*"]
 
 [tool.black]
 target-version = ['py38', 'py39', 'py310', 'py311']
@@ -151,3 +154,10 @@ exclude = '''
   | dist
 )/
 '''
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "tests.django_settings"
+testpaths = ["tests"]
+filterwarnings = "ignore:.*is deprecated.*:DeprecationWarning"
+addopts = "--nomigrations --cov=./ --cov-report term-missing:skip-covered"
+asyncio_mode = "auto"

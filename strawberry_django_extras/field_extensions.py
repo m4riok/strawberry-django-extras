@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Awaitable, Callable
+from typing import TYPE_CHECKING, Any
 
 import strawberry_django
 from asgiref.sync import sync_to_async
@@ -13,6 +13,8 @@ from .inputs import CRUDInput
 from .types import PaginatedList
 
 if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
+
     from strawberry.types import Info
     from strawberry_django.fields.base import StrawberryDjangoFieldBase
     from strawberry_django.fields.field import StrawberryDjangoField
@@ -64,14 +66,20 @@ class MutationHooks(FieldExtension):
             if self.pre_async:
                 await self.pre_async(info, kwargs.get(self.argument_name, None))
             elif self.pre:
-                await sync_or_async(self.pre)(info, kwargs.get(self.argument_name, None))
+                await sync_or_async(self.pre)(
+                    info, kwargs.get(self.argument_name, None)
+                )
 
             result = await next_(source, info, **kwargs)
 
             if self.post_async:
-                await self.post_async(info, kwargs.get(self.argument_name, None), result)
+                await self.post_async(
+                    info, kwargs.get(self.argument_name, None), result
+                )
             elif self.post:
-                await sync_or_async(self.post)(info, kwargs.get(self.argument_name, None), result)
+                await sync_or_async(self.post)(
+                    info, kwargs.get(self.argument_name, None), result
+                )
 
             return result
 
@@ -255,7 +263,7 @@ class TotalCountPaginationExtension(FieldExtension):
             return PaginatedList(
                 results=result,
                 total_count=self.get_total_count(
-                    filters=kwargs.get("filters", None),
+                    filters=kwargs.get("filters"),
                     info=info,
                 ),
             )
@@ -273,7 +281,7 @@ class TotalCountPaginationExtension(FieldExtension):
             return PaginatedList(
                 results=result,
                 total_count=self.get_total_count(
-                    filters=kwargs.get("filters", None),
+                    filters=kwargs.get("filters"),
                     info=info,
                 ),
             )
