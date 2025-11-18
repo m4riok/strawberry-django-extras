@@ -67,9 +67,7 @@ def test_valid_token_returns_user_via_graphql_me_query(
         ),
     }
 )
-def test_valid_token_with_audience_and_issuer(
-    gql_client: GraphQLTestClient, user: Any
-) -> None:
+def test_valid_token_with_audience_and_issuer(gql_client: GraphQLTestClient, user: Any) -> None:
     """Test that JWT with audience and issuer works via GraphQL."""
     jwt_settings.reload()
     token = get_token(user)
@@ -135,9 +133,7 @@ def test_token_for_nonexistent_user_returns_null(gql_client: GraphQLTestClient) 
 
 
 @pytest.mark.django_db(transaction=True)
-def test_token_for_inactive_user_returns_error(
-    gql_client: GraphQLTestClient, user: Any
-) -> None:
+def test_token_for_inactive_user_returns_error(gql_client: GraphQLTestClient, user: Any) -> None:
     """Test that a JWT token for an inactive user returns an error."""
     token = get_token(user)
     user.is_active = False
@@ -165,12 +161,10 @@ def test_token_for_inactive_user_returns_error(
         "this.is.not.a.valid.token",
     ],
 )
-def test_completely_invalid_token_format(
-    gql_client: GraphQLTestClient, invalid_token: str
-) -> None:
+def test_completely_invalid_token_format(gql_client: GraphQLTestClient, invalid_token: str) -> None:
     """Test that completely invalid token formats return an error."""
     # Empty token should not trigger an error (it's like no auth header)
-    if invalid_token == "":
+    if invalid_token == "":  # noqa: PLC1901
         response = gql_client.query(ME_QUERY_ALL_FIELDS)
         assert response.data["me"] is None
     else:
