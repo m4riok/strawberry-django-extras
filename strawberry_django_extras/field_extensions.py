@@ -27,20 +27,20 @@ class MutationHooks(FieldExtension):
     # noinspection PyUnresolvedReferences
     def __init__(
         self,
-        pre: Callable | None = None,
-        post: Callable | None = None,
-        pre_async: Callable | None = None,
-        post_async: Callable | None = None,
+        pre: Callable[[Info, Any], Any] | None = None,
+        post: Callable[[Info, Any, Any], Any] | None = None,
+        pre_async: Callable[[Info, Any], Awaitable[Any]] | None = None,
+        post_async: Callable[[Info, Any, Any], Awaitable[Any]] | None = None,
     ):
         self.pre = pre
         self.post = post
         self.pre_async = pre_async
         self.post_async = post_async
 
-    def apply(self, field: StrawberryDjangoField) -> None:
+    def apply(self, field: StrawberryDjangoField) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
         if is_async():
             field.is_async = True
-        self.argument_name = field.argument_name
+        self.argument_name = field.argument_name  # pyright: ignore[reportAttributeAccessIssue]
 
     if not is_async():
 
@@ -66,14 +66,14 @@ class MutationHooks(FieldExtension):
             if self.pre_async:
                 await self.pre_async(info, kwargs.get(self.argument_name))
             elif self.pre:
-                await sync_or_async(self.pre)(info, kwargs.get(self.argument_name))
+                await sync_or_async(self.pre)(info, kwargs.get(self.argument_name))  # pyright: ignore[reportCallIssue]
 
             result = await next_(source, info, **kwargs)
 
             if self.post_async:
                 await self.post_async(info, kwargs.get(self.argument_name), result)
             elif self.post:
-                await sync_or_async(self.post)(info, kwargs.get(self.argument_name), result)
+                await sync_or_async(self.post)(info, kwargs.get(self.argument_name), result)  # pyright: ignore[reportCallIssue]
 
             return result
 
@@ -88,10 +88,10 @@ class Validators(FieldExtension):
     ):
         super().__init__(**kwargs)
 
-    def apply(self, field: StrawberryDjangoField) -> None:
+    def apply(self, field: StrawberryDjangoField) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
         if is_async():
             field.is_async = True
-        self.argument_name = field.argument_name
+        self.argument_name = field.argument_name  # pyright: ignore[reportAttributeAccessIssue]
 
     if not is_async():
 
@@ -124,10 +124,10 @@ class Permissions(FieldExtension):
     ):
         super().__init__(**kwargs)
 
-    def apply(self, field: StrawberryDjangoField) -> None:
+    def apply(self, field: StrawberryDjangoField) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
         if is_async():
             field.is_async = True
-        self.argument_name = field.argument_name
+        self.argument_name = field.argument_name  # pyright: ignore[reportAttributeAccessIssue]
 
     if not is_async():
 
@@ -152,7 +152,7 @@ class Permissions(FieldExtension):
 
 # noinspection PyPropertyAccess
 class Relationships(FieldExtension):
-    root_field: StrawberryDjangoFieldBase = None
+    root_field: StrawberryDjangoFieldBase | None = None
     argument_name: str
 
     def __init__(
@@ -161,17 +161,17 @@ class Relationships(FieldExtension):
     ):
         super().__init__(**kwargs)
 
-    def apply(self, field: StrawberryDjangoField) -> None:
+    def apply(self, field: StrawberryDjangoField) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
         self.root_field = field
         if is_async():
             field.is_async = True
-        self.argument_name = field.argument_name
+        self.argument_name = field.argument_name  # pyright: ignore[reportAttributeAccessIssue]
 
     if not is_async():
 
         def resolve(self, next_, source, info, **kwargs):
             mutation_input = kwargs.get(self.argument_name)
-            model = self.root_field.django_model
+            model = self.root_field.django_model  # pyright: ignore[reportOptionalMemberAccess]
             rel = {}
             rabbit_hole(model, mutation_input, rel)
             for k, v in mutation_input.__dict__.copy().items():
@@ -201,7 +201,7 @@ class Relationships(FieldExtension):
             **kwargs: Any,
         ) -> Any:
             mutation_input = kwargs.get(self.argument_name)
-            model = self.root_field.django_model
+            model = self.root_field.django_model  # pyright: ignore[reportOptionalMemberAccess]
             rel = {}
             await sync_to_async(rabbit_hole)(model, mutation_input, rel, None)
             for k, v in mutation_input.__dict__.copy().items():
@@ -226,7 +226,7 @@ class Relationships(FieldExtension):
 class TotalCountPaginationExtension(FieldExtension):
     django_model = None
 
-    def apply(self, field: StrawberryDjangoField) -> None:
+    def apply(self, field: StrawberryDjangoField) -> None:  # pyright: ignore[reportIncompatibleMethodOverride]
         # Resolve these now before changing the type
         field.is_list = field.is_list
         field.django_model = field.django_model
@@ -245,10 +245,10 @@ class TotalCountPaginationExtension(FieldExtension):
         if filters is not None:
             return strawberry_django.filters.apply(
                 filters,
-                self.django_model.objects.all(),
+                self.django_model.objects.all(),  # pyright: ignore[reportOptionalMemberAccess]
                 info,
             ).count()
-        return self.django_model.objects.count()
+        return self.django_model.objects.count()  # pyright: ignore[reportOptionalMemberAccess]
 
     if not is_async():
 
@@ -283,10 +283,10 @@ class TotalCountPaginationExtension(FieldExtension):
 
 # Factory functions for extensions
 def mutation_hooks(
-    pre: callable = None,  # noqa: RUF013
-    post: callable = None,  # noqa: RUF013
-    pre_async: callable = None,  # noqa: RUF013
-    post_async: callable = None,  # noqa: RUF013
+    pre: Callable[[Info, Any], Any] | None = None,
+    post: Callable[[Info, Any, Any], Any] | None = None,
+    pre_async: Callable[[Info, Any], Awaitable[Any]] | None = None,
+    post_async: Callable[[Info, Any, Any], Awaitable[Any]] | None = None,
 ):
     """Create a MutationHooks extension with the specified hooks."""
     return MutationHooks(pre, post, pre_async, post_async)

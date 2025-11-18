@@ -27,7 +27,7 @@ from .inputs import (
 
 
 @transaction.atomic
-def kill_a_rabbit(  # noqa: PLR0912, PLR0913, PLR0915
+def kill_a_rabbit(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
     data,
     caller_data,
     is_before=True,
@@ -44,7 +44,7 @@ def kill_a_rabbit(  # noqa: PLR0912, PLR0913, PLR0915
 
     obj = None
     if is_root:
-        obj = next_(source, info, **{argument_name: ni})
+        obj = next_(source, info, **{argument_name: ni})  # pyright: ignore[reportOptionalCall]
         # this is necessary because when I have a nested update input with a OneToOneField down the chain
         # strawberry_django will not update parent object correctly and will have a Traceback in the place
         # of the related One2One object
@@ -136,10 +136,7 @@ def kill_a_rabbit(  # noqa: PLR0912, PLR0913, PLR0915
 
     if data.get("after"):
         for item in data.get("after"):
-            if (
-                item.get("m2m", False) is False
-                and item.get("operation", None) == "create"
-            ):
+            if item.get("m2m", False) is False and item.get("operation", None) == "create":
                 item.get("data").update({item.get("rel_data_id"): obj})
             kill_a_rabbit(item, data, False)
 
@@ -174,7 +171,7 @@ def kill_a_rabbit(  # noqa: PLR0912, PLR0913, PLR0915
 
 # noinspection DuplicatedCode
 def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PLR0915
-    if (
+    if (  # noqa: PLR1702
         hasattr(_input, "__strawberry_definition__")
         and _input.__strawberry_definition__.is_input is True
     ):
@@ -201,15 +198,12 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
         )
         for key, val in fields.items():
             if isinstance(val, (OneToOneField, OneToOneRel)):
-                _rel_input = _input.__dict__.get(key)
+                _rel_input = _input.__dict__.get(key)  # noqa: RUF052
                 when = "after" if isinstance(val, OneToOneRel) else "before"
                 if isinstance(_rel_input, CRUDOneToOneCreateInput):
                     if _rel_input.create is UNSET and _rel_input.assign is UNSET:
                         raise SDJExtrasError("Must create or assign")
-                    if (
-                        _rel_input.create is not UNSET
-                        and _rel_input.assign is not UNSET
-                    ):
+                    if _rel_input.create is not UNSET and _rel_input.assign is not UNSET:
                         raise SDJExtrasError(
                             "Cannot create and assign at the same time",
                         )
@@ -217,7 +211,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                         rel.get("data").update(
                             {
                                 key: val.related_model.objects.get(
-                                    pk=int(_rel_input.assign),
+                                    pk=int(_rel_input.assign),  # pyright: ignore[reportArgumentType]
                                 ),
                             },
                         )
@@ -242,10 +236,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                     except val.related_model.DoesNotExist:
                         existing_instance = None
 
-                    if (
-                        _rel_input.create is not UNSET
-                        and _rel_input.assign is not UNSET
-                    ):
+                    if _rel_input.create is not UNSET and _rel_input.assign is not UNSET:
                         raise SDJExtrasError(
                             "You can either create a new object or assign an existing"
                             " one but not both at the same time",
@@ -254,16 +245,12 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                         _rel_input.assign is not UNSET or _rel_input.create is not UNSET
                     ):
                         raise SDJExtrasError(
-                            "Updating an object is only supported without"
-                            " create/assign.",
+                            "Updating an object is only supported without create/assign.",
                         )
                     if _rel_input.assign is not UNSET:
                         if isinstance(val, OneToOneRel):
                             if val.remote_field.null is False:
-                                if (
-                                    _rel_input.delete is not True
-                                    and existing_instance is not None
-                                ):
+                                if _rel_input.delete is not True and existing_instance is not None:
                                     raise SDJExtrasError(
                                         f"There is a {key} already assigned to this"
                                         f" {val.remote_field.name} and the field is not"
@@ -271,19 +258,14 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                         f" the {key} ?",
                                     )
                             else:  # noqa: PLR5501
-                                if (
-                                    _rel_input.delete is not True
-                                    and existing_instance is not None
-                                ):
+                                if _rel_input.delete is not True and existing_instance is not None:
                                     rel["before"].append(
                                         {
                                             "operation": "skip",
                                             "removals": [
                                                 {
                                                     "model": val.related_model,
-                                                    "rel_data_id": (
-                                                        val.remote_field.name
-                                                    ),
+                                                    "rel_data_id": (val.remote_field.name),
                                                     "pks": [existing_instance.pk],
                                                 },
                                             ],
@@ -358,7 +340,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                     if _rel_input.update is not UNSET:
                         if existing_instance is None:
                             raise SDJExtrasError("Cannot update non existing object")
-                        _rel_input.update.id = existing_instance.pk
+                        _rel_input.update.id = existing_instance.pk  # pyright: ignore[reportOptionalMemberAccess]
                         rel[when].append(
                             {
                                 "data_id": key,
@@ -374,7 +356,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                     if _rel_input.delete is True and existing_instance is not None:
                         if isinstance(val, OneToOneField):
                             if (
-                                val.remote_field.on_delete is models.CASCADE
+                                val.remote_field.on_delete is models.CASCADE  # pyright: ignore[reportAttributeAccessIssue]
                                 and _rel_input.assign is UNSET
                                 and _rel_input.create is UNSET
                             ):
@@ -408,12 +390,9 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                             )
 
             if isinstance(val, ForeignKey):
-                _rel_input = _input.__dict__.get(key)
+                _rel_input = _input.__dict__.get(key)  # noqa: RUF052
                 if isinstance(_rel_input, CRUDOneToManyCreateInput):
-                    if (
-                        _rel_input.create is not UNSET
-                        and _rel_input.assign is not UNSET
-                    ):
+                    if _rel_input.create is not UNSET and _rel_input.assign is not UNSET:
                         raise SDJExtrasError(
                             "Cannot create and assign at the same time",
                         )
@@ -432,10 +411,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                         )
 
                 elif isinstance(_rel_input, CRUDOneToManyUpdateInput):
-                    if (
-                        _rel_input.create is not UNSET
-                        and _rel_input.assign is not UNSET
-                    ):
+                    if _rel_input.create is not UNSET and _rel_input.assign is not UNSET:
                         raise SDJExtrasError(
                             "You can either create a new object or assign an existing"
                             " one but not both at the same time",
@@ -444,8 +420,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                         _rel_input.assign is not UNSET or _rel_input.create is not UNSET
                     ):
                         raise SDJExtrasError(
-                            "Updating an object is only supported without"
-                            " create/assign.",
+                            "Updating an object is only supported without create/assign.",
                         )
                     if _rel_input.assign is not UNSET:
                         if _rel_input.assign is None:
@@ -478,7 +453,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                             raise SDJExtrasError(
                                 f"Cannot update non existing object for key {key}",
                             )
-                        _rel_input.update.id = rel_obj.pk
+                        _rel_input.update.id = rel_obj.pk  # pyright: ignore[reportOptionalMemberAccess]
                         rel["before"].append(
                             {"data_id": key, "operation": "update", "pk": rel_obj.pk},
                         )
@@ -494,11 +469,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                 " creating a new one. If the relationship is nullable"
                                 " you can assign null to unset the relationship",
                             )
-                        if (
-                            not hasattr(_input, "id")
-                            or _input.id is UNSET
-                            or _input.id is None
-                        ):
+                        if not hasattr(_input, "id") or _input.id is UNSET or _input.id is None:
                             raise SDJExtrasError(
                                 "Cannot locate remote object to delete without id and"
                                 " the parent update input had no id field provided.",
@@ -512,15 +483,15 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                         )
 
             elif isinstance(val, ManyToOneRel):
-                _rel_input = _input.__dict__.get(key)
+                _rel_input = _input.__dict__.get(key)  # noqa: RUF052
                 if isinstance(_rel_input, CRUDManyToOneCreateInput):
                     if _rel_input.create is UNSET and _rel_input.assign is UNSET:
                         raise SDJExtrasError("Must create or assign or both")
                     if _rel_input.assign is not UNSET:
                         rel_objs = val.related_model.objects.filter(
-                            pk__in=[int(pk) for pk in _rel_input.assign],
+                            pk__in=[int(pk) for pk in _rel_input.assign],  # pyright: ignore[reportOptionalIterable]
                         )
-                        if rel_objs.count() != len(_rel_input.assign):
+                        if rel_objs.count() != len(_rel_input.assign):  # pyright: ignore[reportArgumentType]
                             raise SDJExtrasError(
                                 f"Not all assigned objects found for {val.related_model.__name__}",
                             )
@@ -541,9 +512,9 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                 elif isinstance(_rel_input, CRUDManyToOneUpdateInput):
                     if _rel_input.assign is not UNSET:
                         rel_objs = val.related_model.objects.filter(
-                            pk__in=[int(pk) for pk in _rel_input.assign],
+                            pk__in=[int(pk) for pk in _rel_input.assign],  # pyright: ignore[reportOptionalIterable]
                         )
-                        if rel_objs.count() != len(_rel_input.assign):
+                        if rel_objs.count() != len(_rel_input.assign):  # pyright: ignore[reportArgumentType]
                             raise SDJExtrasError(
                                 f"Not all assigned objects found for {val.related_model.__name__}",
                             )
@@ -563,8 +534,8 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                     if _rel_input.update is not UNSET:
                         for item in _input.__dict__.get(key).update:
                             manager = getattr(
-                                val.model.objects.get(pk=int(_input.id)),
-                                val.get_accessor_name(),
+                                val.model.objects.get(pk=int(_input.id)),  # pyright: ignore[reportAttributeAccessIssue]
+                                val.get_accessor_name(),  # pyright: ignore[reportArgumentType]
                             )
                             rel["after"].append(
                                 {
@@ -593,8 +564,8 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                 f" ( rel: {key} , model: {val.related_model.__name__})",
                             )
                         manager = getattr(
-                            val.model.objects.get(pk=int(_input.id)),
-                            val.get_accessor_name(),
+                            val.model.objects.get(pk=int(_input.id)),  # pyright: ignore[reportAttributeAccessIssue]
+                            val.get_accessor_name(),  # pyright: ignore[reportArgumentType]
                         )
                         if len(del_pks) > 0:
                             rel["deletions"].append(
@@ -615,7 +586,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                             )
 
             elif isinstance(val, (ManyToManyField, ManyToManyRel)):
-                _rel_input = _input.__dict__.get(key)
+                _rel_input = _input.__dict__.get(key)  # noqa: RUF052
                 if isinstance(_rel_input, CRUDManyToManyCreateInput):
                     if isinstance(val, ManyToManyField):
                         rel_name = val.name
@@ -628,7 +599,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                     if _rel_input.create is UNSET and _rel_input.assign is UNSET:
                         raise SDJExtrasError("Must create or assign or both")
                     if _rel_input.create is not UNSET:
-                        for item in _rel_input.create:
+                        for item in _rel_input.create:  # pyright: ignore[reportOptionalIterable]
                             rel["after"].append(
                                 {
                                     "data_id": key,
@@ -645,7 +616,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                 through_defaults=item.through_defaults,
                             )
                     if _rel_input.assign is not UNSET:
-                        for item in _rel_input.assign:
+                        for item in _rel_input.assign:  # pyright: ignore[reportOptionalIterable]
                             rel["after"].append(
                                 {
                                     "data_id": key,
@@ -672,10 +643,10 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                         raise SDJExtrasError(
                             f"Unable to determine manager for {val.__class__.__name__}",
                         )
-                    p_obj = val.model.objects.get(pk=int(_input.id))
-                    manager = getattr(p_obj, rel_name)
+                    p_obj = val.model.objects.get(pk=int(_input.id))  # pyright: ignore[reportAttributeAccessIssue]
+                    manager = getattr(p_obj, rel_name)  # pyright: ignore[reportArgumentType]
                     if _rel_input.create is not UNSET:
-                        for item in _rel_input.create:
+                        for item in _rel_input.create:  # pyright: ignore[reportOptionalIterable]
                             rel["after"].append(
                                 {
                                     "data_id": key,
@@ -693,7 +664,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                 through_defaults=item.through_defaults,
                             )
                     if _rel_input.assign is not UNSET:
-                        for item in _rel_input.assign:
+                        for item in _rel_input.assign:  # pyright: ignore[reportOptionalIterable]
                             rel["after"].append(
                                 {
                                     "data_id": key,
@@ -711,7 +682,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                 through_defaults=item.through_defaults,
                             )
                     if _rel_input.update is not UNSET:
-                        for item in _rel_input.update:
+                        for item in _rel_input.update:  # pyright: ignore[reportOptionalIterable]
                             rel["after"].append(
                                 {
                                     "data_id": key,
@@ -730,7 +701,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                 through_defaults=item.through_defaults,
                             )
                     if _rel_input.remove is not UNSET:
-                        for item in _rel_input.remove:
+                        for item in _rel_input.remove:  # pyright: ignore[reportOptionalIterable]
                             rel["after"].append(
                                 {
                                     "data_id": key,
@@ -754,7 +725,7 @@ def perform_validation(_input, info):
 
     if (
         hasattr(_input, "__strawberry_definition__")
-        and _input.__strawberry_definition__.is_input is True
+        and _input.__strawberry_definition__.is_input is True  # pyright: ignore[reportAttributeAccessIssue]
     ):
         for v in _input.__dict__.values():
             if isinstance(v, list):
@@ -763,12 +734,12 @@ def perform_validation(_input, info):
 
             if (
                 hasattr(v, "__strawberry_definition__")
-                and v.__strawberry_definition__.is_input is True
+                and v.__strawberry_definition__.is_input is True  # pyright: ignore[reportAttributeAccessIssue]
             ):
                 perform_validation(v, info)
 
-        if hasattr(_input, "validate") and callable(_input.validate):
-            _input.validate(info)
+        if hasattr(_input, "validate") and callable(_input.validate):  # pyright: ignore[reportAttributeAccessIssue]
+            _input.validate(info)  # pyright: ignore[reportAttributeAccessIssue]
 
         for key, val in _input.__dict__.items():
             if val is not None and val is not UNSET:
@@ -793,7 +764,7 @@ def check_permissions(_input, info):
 
     if (
         hasattr(_input, "__strawberry_definition__")
-        and _input.__strawberry_definition__.is_input is True
+        and _input.__strawberry_definition__.is_input is True  # pyright: ignore[reportAttributeAccessIssue]
     ):
         for v in _input.__dict__.values():
             if isinstance(v, list):
@@ -802,23 +773,19 @@ def check_permissions(_input, info):
 
             if (
                 hasattr(v, "__strawberry_definition__")
-                and v.__strawberry_definition__.is_input is True
+                and v.__strawberry_definition__.is_input is True  # pyright: ignore[reportAttributeAccessIssue]
             ):
                 check_permissions(v, info)
 
-        if hasattr(_input, "check_permissions") and callable(_input.check_permissions):
-            _input.check_permissions(info)
+        if hasattr(_input, "check_permissions") and callable(_input.check_permissions):  # pyright: ignore[reportAttributeAccessIssue]
+            _input.check_permissions(info)  # pyright: ignore[reportAttributeAccessIssue]
 
         for key, val in _input.__dict__.items():
             if val is not None and val is not UNSET:
-                if hasattr(
-                    _input, f"check_permissions_{to_camel_case(key)}"
-                ) and callable(
+                if hasattr(_input, f"check_permissions_{to_camel_case(key)}") and callable(
                     getattr(_input, f"check_permissions_{to_camel_case(key)}")
                 ):
-                    getattr(_input, f"check_permissions_{to_camel_case(key)}")(
-                        info, val
-                    )
+                    getattr(_input, f"check_permissions_{to_camel_case(key)}")(info, val)
                     continue
 
                 if hasattr(_input, f"check_permissions_{key}") and callable(

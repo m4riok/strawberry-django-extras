@@ -16,7 +16,7 @@ def jwt_payload(user):
     if hasattr(username, "pk"):
         username = username.pk
 
-    exp = datetime.now(timezone.utc) + jwt_settings.JWT_EXPIRATION_DELTA
+    exp = datetime.now(timezone.utc) + jwt_settings.JWT_EXPIRATION_DELTA  # pyright: ignore[reportOperatorIssue]
 
     payload = {
         user.USERNAME_FIELD: username,
@@ -38,24 +38,24 @@ def jwt_payload(user):
 def jwt_encode(payload):
     return jwt.encode(
         payload,
-        jwt_settings.JWT_PRIVATE_KEY or jwt_settings.JWT_SECRET_KEY,
-        jwt_settings.JWT_ALGORITHM,
+        jwt_settings.JWT_PRIVATE_KEY or jwt_settings.JWT_SECRET_KEY,  # pyright: ignore[reportArgumentType]
+        jwt_settings.JWT_ALGORITHM,  # pyright: ignore[reportArgumentType]
     )
 
 
 def jwt_decode(token):
     return jwt.decode(
         token,
-        jwt_settings.JWT_PUBLIC_KEY or jwt_settings.JWT_SECRET_KEY,
+        jwt_settings.JWT_PUBLIC_KEY or jwt_settings.JWT_SECRET_KEY,  # pyright: ignore[reportArgumentType]
         options={
             "verify_exp": jwt_settings.JWT_VERIFY_EXPIRATION,
             "verify_aud": jwt_settings.JWT_AUDIENCE is not None,
             "verify_signature": jwt_settings.JWT_VERIFY,
         },
-        leeway=jwt_settings.JWT_LEEWAY,
+        leeway=jwt_settings.JWT_LEEWAY,  # pyright: ignore[reportArgumentType]
         audience=jwt_settings.JWT_AUDIENCE,
         issuer=jwt_settings.JWT_ISSUER,
-        algorithms=[jwt_settings.JWT_ALGORITHM],
+        algorithms=[jwt_settings.JWT_ALGORITHM],  # pyright: ignore[reportArgumentType]
     )
 
 
@@ -63,7 +63,7 @@ def get_http_authorization(request):
     auth = request.META.get(jwt_settings.JWT_AUTH_HEADER_NAME, "").split()
     prefix = jwt_settings.JWT_AUTH_HEADER_PREFIX
 
-    if len(auth) != 2 or auth[0].lower() != prefix.lower():  # noqa: PLR2004
+    if len(auth) != 2 or auth[0].lower() != prefix.lower():  # pyright: ignore[reportAttributeAccessIssue] # noqa: PLR2004
         return None
     return auth[1]
 
@@ -75,7 +75,7 @@ def get_credentials(request):
 # noinspection PyUnusedLocal
 def get_payload(token, context=None):
     try:
-        payload = jwt_settings.JWT_DECODE_HANDLER(token)
+        payload = jwt_settings.JWT_DECODE_HANDLER(token)  # pyright: ignore[reportCallIssue]
     except jwt.ExpiredSignatureError as e:
         raise JSONWebTokenExpired from e
     except jwt.DecodeError as e:
@@ -94,12 +94,12 @@ def get_user_by_natural_key(username):
 
 
 def get_user_by_payload(payload):
-    username = jwt_settings.JWT_PAYLOAD_GET_USERNAME_HANDLER(payload)
+    username = jwt_settings.JWT_PAYLOAD_GET_USERNAME_HANDLER(payload)  # pyright: ignore[reportCallIssue]
 
     if not username:
         raise JSONWebTokenError(_("Invalid payload"))
 
-    user = jwt_settings.JWT_GET_USER_BY_NATURAL_KEY_HANDLER(username)
+    user = jwt_settings.JWT_GET_USER_BY_NATURAL_KEY_HANDLER(username)  # pyright: ignore[reportCallIssue]
 
     if user is not None and not getattr(user, "is_active", True):
         raise JSONWebTokenError(_("User is disabled"))
@@ -107,7 +107,7 @@ def get_user_by_payload(payload):
 
 
 def refresh_has_expired(orig_iat):
-    exp = orig_iat + jwt_settings.JWT_REFRESH_EXPIRATION_DELTA.total_seconds()
+    exp = orig_iat + jwt_settings.JWT_REFRESH_EXPIRATION_DELTA.total_seconds()  # pyright: ignore[reportAttributeAccessIssue]
     return timegm(datetime.now(timezone.utc).utctimetuple()) > exp
 
 

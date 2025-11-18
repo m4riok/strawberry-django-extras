@@ -43,7 +43,7 @@ class AbstractRefreshToken(models.Model):
 
     def generate_token(self):
         return binascii.hexlify(
-            os.urandom(jwt_settings.JWT_REFRESH_TOKEN_N_BYTES),
+            os.urandom(jwt_settings.JWT_REFRESH_TOKEN_N_BYTES),  # pyright: ignore[reportArgumentType]
         ).decode()
 
     def get_token(self):
@@ -54,11 +54,11 @@ class AbstractRefreshToken(models.Model):
     # noinspection PyUnusedLocal
     def is_expired(self, request=None):
         orig_iat = timegm(self.created.utctimetuple())
-        return jwt_settings.JWT_REFRESH_EXPIRED_HANDLER(orig_iat)
+        return jwt_settings.JWT_REFRESH_EXPIRED_HANDLER(orig_iat)  # pyright: ignore[reportCallIssue]
 
     def get_exp(self):
         orig_iat = timegm(self.created.utctimetuple())
-        return int(jwt_settings.JWT_REFRESH_EXPIRATION_DELTA.total_seconds()) + orig_iat
+        return int(jwt_settings.JWT_REFRESH_EXPIRATION_DELTA.total_seconds()) + orig_iat  # pyright: ignore[reportAttributeAccessIssue]
 
     def get_iat(self):
         return timegm(self.created.utctimetuple())

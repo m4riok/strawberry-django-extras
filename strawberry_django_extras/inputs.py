@@ -8,9 +8,7 @@ T_CREATE = TypeVar("T_CREATE")
 T_UPDATE = TypeVar("T_UPDATE")
 
 
-@strawberry.input(
-    name="CRUDInput", description="CRUDInput Base Class for all CRUD Inputs"
-)
+@strawberry.input(name="CRUDInput", description="CRUDInput Base Class for all CRUD Inputs")
 class CRUDInput:
     pass
 
@@ -30,7 +28,7 @@ class CRUDRemoveInput:
 )
 class CRUDManyToManyItem(Generic[T_CREATE]):
     object_data: T_CREATE
-    through_defaults: JSON | None = UNSET
+    through_defaults: JSON | None = UNSET  # pyright: ignore[reportInvalidTypeForm]
 
 
 @strawberry.input(
@@ -39,7 +37,7 @@ class CRUDManyToManyItem(Generic[T_CREATE]):
 )
 class CRUDManyToManyItemUpdate(Generic[T_UPDATE]):
     object_data: T_UPDATE
-    through_defaults: JSON | None = UNSET
+    through_defaults: JSON | None = UNSET  # pyright: ignore[reportInvalidTypeForm]
 
 
 @strawberry.input(
@@ -48,7 +46,7 @@ class CRUDManyToManyItemUpdate(Generic[T_UPDATE]):
 )
 class CRUDManyToManyID:
     id: ID
-    through_defaults: JSON | None = UNSET
+    through_defaults: JSON | None = UNSET  # pyright: ignore[reportInvalidTypeForm]
 
 
 # CREATE INPUTS

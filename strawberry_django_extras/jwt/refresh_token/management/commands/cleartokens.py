@@ -19,8 +19,8 @@ class Command(BaseCommand):
         qs = get_refresh_token_model().objects
         query = Q(revoked__isnull=False)
 
-        if expired:
-            qs = qs.expired()
+        if expired and hasattr(qs, "expired"):
+            qs = qs.expired()  # pyright: ignore[reportAttributeAccessIssue]
             query |= Q(expired=True)
 
         deleted, _ = qs.filter(query).delete()

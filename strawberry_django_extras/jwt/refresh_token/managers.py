@@ -8,7 +8,7 @@ from strawberry_django_extras.jwt.settings import jwt_settings
 
 class RefreshTokenQuerySet(models.QuerySet):
     def expired(self):
-        expires = timezone.now() - jwt_settings.JWT_REFRESH_EXPIRATION_DELTA
+        expires = timezone.now() - jwt_settings.JWT_REFRESH_EXPIRATION_DELTA  # pyright: ignore[reportOperatorIssue]
         return self.annotate(
             expired=Case(
                 When(created__lt=expires, then=Val(True)),

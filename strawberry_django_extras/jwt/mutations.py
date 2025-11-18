@@ -50,15 +50,15 @@ class JWTMutations:
                 raise JWTError("Token refresh not supported")
 
             if jwt_settings.JWT_LONG_RUNNING_REFRESH_TOKEN:
-                old_refresh_token = get_refresh_token(r_token, None)
+                old_refresh_token = get_refresh_token(r_token, None)  # pyright: ignore[reportPossiblyUnboundVariable]
                 if old_refresh_token.is_expired():
                     raise JWTError("Token expired")
-                user = get_refresh_token_user(old_refresh_token)
+                user = get_refresh_token_user(old_refresh_token)  # pyright: ignore[reportPossiblyUnboundVariable]
                 token = get_token(user)
                 # choose whether we provide a new refresh token on each request or not
 
                 if jwt_settings.JWT_REUSE_REFRESH_TOKENS:
-                    new_refresh_token = create_refresh_token(user, old_refresh_token)
+                    new_refresh_token = create_refresh_token(user, old_refresh_token)  # pyright: ignore[reportPossiblyUnboundVariable]
                     refresh_token = RefreshTokenType(
                         token=new_refresh_token.token,
                         exp=new_refresh_token.get_exp(),
@@ -89,11 +89,8 @@ class JWTMutations:
 
             token = get_token(user)
 
-            if (
-                jwt_settings.JWT_ALLOW_REFRESH
-                and jwt_settings.JWT_LONG_RUNNING_REFRESH_TOKEN
-            ):
-                new_refresh_token = create_refresh_token(user, None)
+            if jwt_settings.JWT_ALLOW_REFRESH and jwt_settings.JWT_LONG_RUNNING_REFRESH_TOKEN:
+                new_refresh_token = create_refresh_token(user, None)  # pyright: ignore[reportPossiblyUnboundVariable]
                 refresh_token = RefreshTokenType(
                     token=new_refresh_token.token,
                     exp=new_refresh_token.get_exp(),
@@ -106,7 +103,7 @@ class JWTMutations:
     @strawberry.mutation
     @sync_or_async
     def revoke(self, info: Info, token: str) -> bool:
-        refresh_token = get_refresh_token(token, None)
+        refresh_token = get_refresh_token(token, None)  # pyright: ignore[reportPossiblyUnboundVariable]
         refresh_token.revoke()
         return True
 

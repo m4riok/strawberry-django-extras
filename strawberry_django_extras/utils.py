@@ -1,4 +1,4 @@
-from strawberry.type import StrawberryContainer
+from strawberry.types.base import StrawberryContainer
 
 
 def unwrap_type(type_):

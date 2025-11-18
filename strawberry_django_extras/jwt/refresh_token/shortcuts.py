@@ -15,7 +15,7 @@ def get_refresh_token(token, context=None):
             refresh_token_model=refresh_token_model,
             token=token,
             context=context,
-        )
+        )  # pyright: ignore[reportCallIssue]
 
     except refresh_token_model.DoesNotExist:
         raise JSONWebTokenError(_("Invalid refresh token")) from None
@@ -25,7 +25,7 @@ def create_refresh_token(user, refresh_token=None) -> AbstractRefreshToken:
     if refresh_token is not None and jwt_settings.JWT_REUSE_REFRESH_TOKENS:
         refresh_token.reuse()
         return refresh_token
-    return get_refresh_token_model().objects.create(user=user)
+    return get_refresh_token_model().objects.create(user=user)  # pyright: ignore[reportReturnType]
 
 
 def get_refresh_token_user(refresh_token):
@@ -33,8 +33,6 @@ def get_refresh_token_user(refresh_token):
 
 
 refresh_token_lazy = lazy(
-    lambda user, refresh_token=None: create_refresh_token(
-        user, refresh_token
-    ).get_token(),
+    lambda user, refresh_token=None: create_refresh_token(user, refresh_token).get_token(),
     str,
 )
