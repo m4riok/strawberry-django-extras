@@ -33,7 +33,7 @@ jobs:
           pip install ruff
       # Update output format to enable automatic inline annotations.
       - name: Run Ruff
-        run: ruff check --output-format=github .
+        run: ruff check --preview --output-format=github .
 
   tests:
     runs-on: ubuntu-latest
