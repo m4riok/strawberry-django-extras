@@ -471,10 +471,21 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                     elif isinstance(_rel_input, CRUDOneToOneUpdateInput):
                         parent_instance = model.objects.get(pk=int(_input.id))
                         parent_ct = ContentType.objects.get_for_model(model)
-                        try:
-                            existing_instance = getattr(parent_instance, key)
-                        except related_model.DoesNotExist:
-                            existing_instance = None
+                        existing_instance = None
+                        existing_instances = list(
+                            related_model.objects.filter(
+                                **{
+                                    ct_field_name: parent_ct,
+                                    fk_field_name: parent_instance.pk,
+                                },
+                            )[:2]
+                        )
+                        if len(existing_instances) > 1:
+                            raise SDJExtrasError(
+                                f"Multiple related {related_model.__name__} instances found for {key}"
+                            )
+                        if existing_instances:
+                            existing_instance = existing_instances[0]
 
                         if _rel_input.create is not UNSET and _rel_input.assign is not UNSET:
                             raise SDJExtrasError("Cannot create and assign at the same time")
@@ -483,8 +494,36 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                         ):
                             raise SDJExtrasError("Updating is only supported without create/assign")
 
+                        should_replace = (
+                            existing_instance is not None
+                            and (
+                                (_rel_input.assign is not UNSET and _rel_input.assign is not None)
+                                or (_rel_input.create is not UNSET and _rel_input.create is not None)
+                            )
+                        )
+                        if should_replace:
+                            ct_model_field = related_model._meta.get_field(ct_field_name)
+                            fk_model_field = related_model._meta.get_field(fk_field_name)
+                            if ct_model_field.null is False or fk_model_field.null is False:
+                                raise SDJExtrasError("Cannot assign null to non nullable field")
+                            rel["before"].append({
+                                "operation": "skip",
+                                "obj": parent_instance,
+                                "generic_removals": [{
+                                    "model": related_model,
+                                    "pks": [existing_instance.pk],
+                                    "parent_ct": parent_ct,
+                                    "ct_field_name": ct_field_name,
+                                    "fk_field_name": fk_field_name,
+                                }],
+                            })
+
                         if _rel_input.assign is not UNSET:
                             if _rel_input.assign is None:
+                                ct_model_field = related_model._meta.get_field(ct_field_name)
+                                fk_model_field = related_model._meta.get_field(fk_field_name)
+                                if ct_model_field.null is False or fk_model_field.null is False:
+                                    raise SDJExtrasError("Cannot assign null to non nullable field")
                                 if existing_instance is not None:
                                     rel["generic_removals"] = rel.get("generic_removals", [])
                                     rel["generic_removals"].append({
@@ -495,16 +534,6 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                         "fk_field_name": fk_field_name,
                                     })
                             else:
-                                if existing_instance is not None and _rel_input.delete is not True:
-                                    rel["generic_removals"] = rel.get("generic_removals", [])
-                                    rel["generic_removals"].append({
-                                        "model": related_model,
-                                        "pks": [existing_instance.pk],
-                                        "parent_ct": parent_ct,
-                                        "ct_field_name": ct_field_name,
-                                        "fk_field_name": fk_field_name,
-                                    })
-
                                 rel["generic_assignments"] = rel.get("generic_assignments", [])
                                 rel["generic_assignments"].append({
                                     "model": related_model,
@@ -515,11 +544,6 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                 })
 
                         if _rel_input.create is not UNSET:
-                            if existing_instance is not None and _rel_input.delete is not True:
-                                raise SDJExtrasError(
-                                    f"There is already a {key} assigned. Maybe specify delete to replace?"
-                                )
-
                             if existing_instance is not None and _rel_input.delete is True:
                                 rel["deletions"].append({
                                     "model": related_model,
