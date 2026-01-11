@@ -1,6 +1,7 @@
 # Nested Mutations
 
 This package provides support for deeply nested mutations through a field extension and some wrapper input classes. 
+For GenericForeignKey/GenericRelation examples, see the [Generic Relationships](./generic_relationships.md) guide.
 
 It makes sense for the inputs to be different when updating an object vs creating one. So we provide different input wrappers for each type of operation. 
 It also makes sense that the api provided would be different depending on the type of relationship between the related models. 
@@ -115,8 +116,9 @@ We could ofcourse use the `assign` action to assign an existing goat to a user o
     back to the `User` model through a `designer` field we could create or assign the nested objects in one go.
 
 #### One to Many
-`CRUDOneToManyCreateInput`. Similarly to the one to one wrapper it provides two actions `create` and `assign` which are mutually exclusive. The only difference is 
-that the relationship is through a `ForeignKey` meaning the other side of the relationship would be Many to One requiring a different wrapper. Here's a brief example:
+`CRUDOneToManyCreateInput` now takes two generic parameters: `CRUDOneToManyCreateInput[T_CREATE, T_ASSIGN]`. It provides two actions `create` and `assign` which are mutually exclusive.
+The only difference is that the relationship is through a `ForeignKey` (or `GenericForeignKey`) meaning the other side of the relationship would be Many to One requiring a different wrapper.
+`assign` uses `T_ASSIGN` (typically `ID` for ForeignKey, or a one-of input for GenericForeignKey). Here's a brief example:
 
 ```graphql
 mutation {
@@ -228,8 +230,10 @@ class UserPartial:
     when the partial is used as a nested input and if defined it won't be used in any way to update the related object.
 
 #### One to Many
-`CRUDOneToManyUpdateInput` can be used when alongside an update mutation you want to update related objects. The resulting schema will provide three possible actions for
-your mutation and a boolean flag. These are the same as the ones provided by the One to One wrapper, and they function in exactly the same fashion. 
+`CRUDOneToManyUpdateInput` can be used when alongside an update mutation you want to update related objects. It now takes three generic parameters:
+`CRUDOneToManyUpdateInput[T_CREATE, T_ASSIGN, T_UPDATE]`. The resulting schema will provide three possible actions for your mutation and a boolean flag. These are the
+same as the ones provided by the One to One wrapper, and they function in exactly the same fashion. `assign` uses `T_ASSIGN` (typically `ID` for ForeignKey, or a one-of
+input for GenericForeignKey) and supports `null` to unlink when the field is nullable.
 
 #### Many to One
 `CRUDManyToOneUpdateInput` can be used when alongside an update mutation you want to update related objects. The resulting schema will provide __four__ possible actions 
@@ -262,4 +266,3 @@ for your mutation. These are as follows:
 
 !!! note
     Please note that again the `UserPartial` input must declare an `id` field of type `ID` and __not__ `auto`. 
-

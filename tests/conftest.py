@@ -57,9 +57,7 @@ def gql_client(request):
         },
     )[request.param]
 
-    optimizer_ctx = (
-        contextlib.nullcontext if with_optimizer else DjangoOptimizerExtension.disabled
-    )
+    optimizer_ctx = contextlib.nullcontext if with_optimizer else DjangoOptimizerExtension.disabled
 
     with optimizer_ctx(), GraphQLTestClient(path, client_class()) as c:
         yield c

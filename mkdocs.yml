@@ -75,8 +75,8 @@ nav:
     - guide/permissions.md
     - guide/hooks.md
     - guide/mutations.md
+    - guide/generic_relationships.md
     - guide/pagination.md
     - guide/lazy_loading.md
   - community-projects.md
-
 

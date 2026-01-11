@@ -1,5 +1,45 @@
 # Breaking Changes
 
+## One-to-Many Assign Type Parameter (v0.2.6)
+
+### Summary
+
+`CRUDOneToManyCreateInput` and `CRUDOneToManyUpdateInput` now require an explicit **assign** type parameter to support GenericForeignKey relationships. This is a **breaking change** for type annotations.
+
+### Why This Change Was Made
+
+GenericForeignKey assignments use a one-of input type rather than a simple `ID`. To support both FK and GFK in a typed way, the assign input type is now a generic parameter.
+
+### What You Need to Do
+
+Update any usages of `CRUDOneToManyCreateInput` and `CRUDOneToManyUpdateInput` to include the assign type.
+
+### Migration Examples
+
+#### Create Input
+```python
+# ❌ OLD
+child: Optional[CRUDOneToManyCreateInput[ChildInput]] = UNSET
+
+# ✅ NEW (ForeignKey)
+child: Optional[CRUDOneToManyCreateInput[ChildInput, ID]] = UNSET
+
+# ✅ NEW (GenericForeignKey)
+child: Optional[CRUDOneToManyCreateInput[ChildInput, ChildAssignInput]] = UNSET
+```
+
+#### Update Input
+```python
+# ❌ OLD
+child: Optional[CRUDOneToManyUpdateInput[ChildInput, ChildPartial]] = UNSET
+
+# ✅ NEW (ForeignKey)
+child: Optional[CRUDOneToManyUpdateInput[ChildInput, ID, ChildPartial]] = UNSET
+
+# ✅ NEW (GenericForeignKey)
+child: Optional[CRUDOneToManyUpdateInput[ChildInput, ChildAssignInput, ChildPartial]] = UNSET
+```
+
 ## Removal of Convenience Imports (v0.2.0)
 
 ### Summary

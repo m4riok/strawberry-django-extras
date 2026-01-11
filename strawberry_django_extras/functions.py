@@ -316,8 +316,8 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
 
                     if _rel_input.assign is not UNSET:
                         if _rel_input.assign is None:
-                            ct_model_field = model._meta.get_field(ct_field)
-                            fk_model_field = model._meta.get_field(fk_field)
+                            ct_model_field = model._meta.get_field(ct_field)  # noqa: SLF001
+                            fk_model_field = model._meta.get_field(fk_field)  # noqa: SLF001
                             if ct_model_field.null is False or fk_model_field.null is False:
                                 raise SDJExtrasError("Cannot assign null to non nullable field")
                             rel.get("data").update({ct_field: None, fk_field: None})
@@ -494,47 +494,48 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                         ):
                             raise SDJExtrasError("Updating is only supported without create/assign")
 
-                        should_replace = (
-                            existing_instance is not None
-                            and (
-                                (_rel_input.assign is not UNSET and _rel_input.assign is not None)
-                                or (_rel_input.create is not UNSET and _rel_input.create is not None)
-                            )
+                        should_replace = existing_instance is not None and (
+                            (_rel_input.assign is not UNSET and _rel_input.assign is not None)
+                            or (_rel_input.create is not UNSET and _rel_input.create is not None)
                         )
                         if should_replace:
-                            ct_model_field = related_model._meta.get_field(ct_field_name)
-                            fk_model_field = related_model._meta.get_field(fk_field_name)
+                            ct_model_field = related_model._meta.get_field(ct_field_name)  # noqa: SLF001
+                            fk_model_field = related_model._meta.get_field(fk_field_name)  # noqa: SLF001
                             if ct_model_field.null is False or fk_model_field.null is False:
                                 raise SDJExtrasError("Cannot assign null to non nullable field")
                             rel["before"].append({
                                 "operation": "skip",
                                 "obj": parent_instance,
-                                "generic_removals": [{
-                                    "model": related_model,
-                                    "pks": [existing_instance.pk],
-                                    "parent_ct": parent_ct,
-                                    "ct_field_name": ct_field_name,
-                                    "fk_field_name": fk_field_name,
-                                }],
+                                "generic_removals": [
+                                    {
+                                        "model": related_model,
+                                        "pks": [existing_instance.pk],  # pyright: ignore[reportOptionalMemberAccess]
+                                        "parent_ct": parent_ct,
+                                        "ct_field_name": ct_field_name,
+                                        "fk_field_name": fk_field_name,
+                                    }
+                                ],
                             })
 
                         if _rel_input.assign is not UNSET:
                             if _rel_input.assign is None:
-                                ct_model_field = related_model._meta.get_field(ct_field_name)
-                                fk_model_field = related_model._meta.get_field(fk_field_name)
+                                ct_model_field = related_model._meta.get_field(ct_field_name)  # noqa: SLF001
+                                fk_model_field = related_model._meta.get_field(fk_field_name)  # noqa: SLF001
                                 if ct_model_field.null is False or fk_model_field.null is False:
                                     raise SDJExtrasError("Cannot assign null to non nullable field")
                                 if existing_instance is not None:
                                     rel["before"].append({
                                         "operation": "skip",
                                         "obj": parent_instance,
-                                        "generic_removals": [{
-                                            "model": related_model,
-                                            "pks": [existing_instance.pk],
-                                            "parent_ct": parent_ct,
-                                            "ct_field_name": ct_field_name,
-                                            "fk_field_name": fk_field_name,
-                                        }],
+                                        "generic_removals": [
+                                            {
+                                                "model": related_model,
+                                                "pks": [existing_instance.pk],
+                                                "parent_ct": parent_ct,
+                                                "ct_field_name": ct_field_name,
+                                                "fk_field_name": fk_field_name,
+                                            }
+                                        ],
                                     })
                             else:
                                 rel["generic_assignments"] = rel.get("generic_assignments", [])

@@ -11,10 +11,7 @@ class DisableAnonymousIntrospection(SchemaExtension):
         schema_context = self.execution_context.context
         request = schema_context.request
 
-        if (
-            not request.user.is_authenticated
-            and jwt_settings.JWT_AUTHENTICATE_INTROSPECTION
-        ):
+        if not request.user.is_authenticated and jwt_settings.JWT_AUTHENTICATE_INTROSPECTION:
             self.execution_context.validation_rules = (
                 *self.execution_context.validation_rules,
                 NoSchemaIntrospectionCustomRule,
