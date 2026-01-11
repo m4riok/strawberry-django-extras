@@ -314,27 +314,31 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                     current_content_type = getattr(parent_instance, ct_field)
                     current_object_id = getattr(parent_instance, fk_field)
 
-                    if _rel_input.delete is True:
-                        rel.get("data").update({ct_field: None, fk_field: None})
+                    if _rel_input.assign is not UNSET:
+                        if _rel_input.assign is None:
+                            ct_model_field = model._meta.get_field(ct_field)
+                            fk_model_field = model._meta.get_field(fk_field)
+                            if ct_model_field.null is False or fk_model_field.null is False:
+                                raise SDJExtrasError("Cannot assign null to non nullable field")
+                            rel.get("data").update({ct_field: None, fk_field: None})
+                        else:
+                            target_model = None
+                            target_pk = None
+                            for field_name in _rel_input.assign.__dataclass_fields__:
+                                value = getattr(_rel_input.assign, field_name)
+                                if value is not None and value is not UNSET:
+                                    target_model = _rel_input.assign._model_mapping[field_name]  # noqa: SLF001
+                                    target_pk = int(value)
+                                    break
 
-                    if _rel_input.assign is not UNSET and _rel_input.assign is not None:
-                        target_model = None
-                        target_pk = None
-                        for field_name in _rel_input.assign.__dataclass_fields__:
-                            value = getattr(_rel_input.assign, field_name)
-                            if value is not None and value is not UNSET:
-                                target_model = _rel_input.assign._model_mapping[field_name]  # noqa: SLF001
-                                target_pk = int(value)
-                                break
+                            if target_model is None:
+                                raise SDJExtrasError("oneOf input has no field set")
 
-                        if target_model is None:
-                            raise SDJExtrasError("oneOf input has no field set")
-
-                        content_type = ContentType.objects.get_for_model(target_model)
-                        rel.get("data").update({
-                            ct_field: content_type,
-                            fk_field: target_pk,
-                        })
+                            content_type = ContentType.objects.get_for_model(target_model)
+                            rel.get("data").update({
+                                ct_field: content_type,
+                                fk_field: target_pk,
+                            })
 
                     if _rel_input.create is not UNSET and _rel_input.create is not None:
                         target_model = None
@@ -389,6 +393,24 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                             "data_id": key,
                         })
                         rabbit_hole(target_model, target_data, rel["before"][-1])
+
+                    if _rel_input.delete is True:
+                        if _rel_input.assign is UNSET and _rel_input.create is UNSET:
+                            raise SDJExtrasError(
+                                "Cannot delete remote object without assigning or"
+                                " creating a new one. If the relationship is nullable"
+                                " you can assign null to unset the relationship"
+                            )
+                        if current_content_type is not None and current_object_id is not None:
+                            target_model = current_content_type.model_class()
+                            if target_model is None:
+                                raise SDJExtrasError(
+                                    "Cannot resolve model class for current content type"
+                                )
+                            rel["deletions"].append({
+                                "model": target_model,
+                                "pks": [current_object_id],
+                            })
 
                 else:
                     raise SDJExtrasError(
