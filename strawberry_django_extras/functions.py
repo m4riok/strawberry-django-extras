@@ -525,13 +525,16 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                 if ct_model_field.null is False or fk_model_field.null is False:
                                     raise SDJExtrasError("Cannot assign null to non nullable field")
                                 if existing_instance is not None:
-                                    rel["generic_removals"] = rel.get("generic_removals", [])
-                                    rel["generic_removals"].append({
-                                        "model": related_model,
-                                        "pks": [existing_instance.pk],
-                                        "parent_ct": parent_ct,
-                                        "ct_field_name": ct_field_name,
-                                        "fk_field_name": fk_field_name,
+                                    rel["before"].append({
+                                        "operation": "skip",
+                                        "obj": parent_instance,
+                                        "generic_removals": [{
+                                            "model": related_model,
+                                            "pks": [existing_instance.pk],
+                                            "parent_ct": parent_ct,
+                                            "ct_field_name": ct_field_name,
+                                            "fk_field_name": fk_field_name,
+                                        }],
                                     })
                             else:
                                 rel["generic_assignments"] = rel.get("generic_assignments", [])
