@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
 from django.db.models.fields.related import (
     ForeignKey,
@@ -54,7 +56,16 @@ def kill_a_rabbit(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
 
     else:  # noqa: PLR5501
         if data.get("operation") == "create":
-            if data.get("m2m", False) is True:
+            if data.get("is_generic_fk_target"):
+                obj = data.get("model").objects.create(**data.get("data"))
+
+                parent_data = caller_data.get("data")
+                parent_data.update({
+                    data.get("parent_ct_field"): data.get("target_ct"),
+                    data.get("parent_fk_field"): obj.pk,
+                })
+
+            elif data.get("m2m", False) is True:
                 manager = data.get("manager")
                 obj = (
                     manager.create(
@@ -132,17 +143,41 @@ def kill_a_rabbit(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
     if is_before:  # noqa: SIM102
         # Only necessary for create operations
         if data.get("operation") in ["create", "update"]:
-            caller_data.get("data").update({data.get("data_id"): obj})
+            data_id = data.get("data_id")
+            if data_id is not None and data_id is not UNSET:
+                caller_data.get("data").update({data_id: obj})
 
     if data.get("after"):
         for item in data.get("after"):
             if item.get("m2m", False) is False and item.get("operation", None) == "create":
-                item.get("data").update({item.get("rel_data_id"): obj})
+                if item.get("is_generic_relation"):
+                    fk_field_name = item.get("fk_field_name")
+                    if fk_field_name not in item.get("data"):
+                        item.get("data").update({fk_field_name: obj.pk})  # pyright: ignore[reportOptionalMemberAccess]
+                else:
+                    item.get("data").update({item.get("rel_data_id"): obj})
             kill_a_rabbit(item, data, False)
 
     if data.get("assignments"):
         for assignment in data.get("assignments"):
             assignment.get("objs").update(**{assignment.get("assignment_id"): obj})
+
+    if data.get("generic_assignments"):
+        parent_obj = data.get("obj") or obj
+
+        for assignment in data.get("generic_assignments"):
+            parent_ct = assignment["parent_ct"]
+            qs = assignment["model"].objects.filter(
+                pk__in=assignment.get("pks") or [assignment["pk"]]
+            )
+
+            updated = qs.update(**{
+                assignment["ct_field_name"]: parent_ct,
+                assignment["fk_field_name"]: parent_obj.pk,  # pyright: ignore[reportOptionalMemberAccess]
+            })
+
+            if updated == 0:
+                raise SDJExtrasError("No targets available for assignment")
 
     if data.get("deletions"):
         for deletion in data.get("deletions"):
@@ -152,6 +187,30 @@ def kill_a_rabbit(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
                 deletion.get("model").objects.filter(
                     pk__in=deletion.get("pks"),
                 ).delete()
+
+    if data.get("generic_removals"):
+        parent_obj = data.get("obj") or obj
+
+        for removal in data.get("generic_removals"):
+            parent_ct = removal["parent_ct"]
+            updated = (
+                removal["model"]
+                .objects.filter(
+                    pk__in=removal["pks"],
+                    **{
+                        removal["ct_field_name"]: parent_ct,
+                        removal["fk_field_name"]: parent_obj.pk,  # pyright: ignore[reportOptionalMemberAccess]
+                    },
+                )
+                .update(
+                    **{
+                        removal["ct_field_name"]: None,
+                        removal["fk_field_name"]: None,
+                    },
+                )
+            )
+            if updated != len(removal["pks"]):
+                raise SDJExtrasError("Some targets were not attached to this parent")
 
     if data.get("removals"):
         for removal in data.get("removals"):
@@ -170,7 +229,7 @@ def kill_a_rabbit(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
 
 
 # noinspection DuplicatedCode
-def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PLR0915
+def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PLR0914, PLR0915
     if (  # noqa: PLR1702
         hasattr(_input, "__strawberry_definition__")
         and _input.__strawberry_definition__.is_input is True
@@ -197,7 +256,411 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
             },
         )
         for key, val in fields.items():
-            if isinstance(val, (OneToOneField, OneToOneRel)):
+            if isinstance(val, GenericForeignKey):
+                _rel_input = _input.__dict__.get(key)  # noqa: RUF052
+                ct_field = val.ct_field
+                fk_field = val.fk_field
+
+                if isinstance(_rel_input, CRUDOneToManyCreateInput):
+                    if _rel_input.create is not UNSET and _rel_input.assign is not UNSET:
+                        raise SDJExtrasError("Cannot create and assign at the same time")
+                    if _rel_input.create is UNSET and _rel_input.assign is UNSET:
+                        raise SDJExtrasError("Must create or assign")
+
+                    if _rel_input.assign is not UNSET and _rel_input.assign is not None:
+                        target_model = None
+                        target_pk = None
+                        for field_name in _rel_input.assign.__dataclass_fields__:
+                            value = getattr(_rel_input.assign, field_name)
+                            if value is not None and value is not UNSET:
+                                target_model = _rel_input.assign._model_mapping[field_name]  # noqa: SLF001
+                                target_pk = int(value)
+                                break
+
+                        if target_model is None:
+                            raise SDJExtrasError("oneOf input has no field set")
+
+                        content_type = ContentType.objects.get_for_model(target_model)
+                        rel.get("data").update({
+                            ct_field: content_type,
+                            fk_field: target_pk,
+                        })
+
+                    if _rel_input.create is not UNSET and _rel_input.create is not None:
+                        target_model = None
+                        target_data = None
+                        for field_name in _rel_input.create.__dataclass_fields__:
+                            value = getattr(_rel_input.create, field_name)
+                            if value is not None and value is not UNSET:
+                                target_model = _rel_input.create._model_mapping[field_name]  # noqa: SLF001
+                                target_data = value
+                                break
+
+                        if target_model is None:
+                            raise SDJExtrasError("oneOf input has no field set")
+
+                        target_ct = ContentType.objects.get_for_model(target_model)
+                        rel["before"].append({
+                            "operation": "create",
+                            "is_generic_fk_target": True,
+                            "target_ct": target_ct,
+                            "parent_ct_field": ct_field,
+                            "parent_fk_field": fk_field,
+                        })
+                        rabbit_hole(target_model, target_data, rel["before"][-1])
+
+                elif isinstance(_rel_input, CRUDOneToManyUpdateInput):
+                    parent_instance = model.objects.get(pk=int(_input.id))
+                    current_content_type = getattr(parent_instance, ct_field)
+                    current_object_id = getattr(parent_instance, fk_field)
+
+                    if _rel_input.delete is True:
+                        rel.get("data").update({ct_field: None, fk_field: None})
+
+                    if _rel_input.assign is not UNSET and _rel_input.assign is not None:
+                        target_model = None
+                        target_pk = None
+                        for field_name in _rel_input.assign.__dataclass_fields__:
+                            value = getattr(_rel_input.assign, field_name)
+                            if value is not None and value is not UNSET:
+                                target_model = _rel_input.assign._model_mapping[field_name]  # noqa: SLF001
+                                target_pk = int(value)
+                                break
+
+                        if target_model is None:
+                            raise SDJExtrasError("oneOf input has no field set")
+
+                        content_type = ContentType.objects.get_for_model(target_model)
+                        rel.get("data").update({
+                            ct_field: content_type,
+                            fk_field: target_pk,
+                        })
+
+                    if _rel_input.create is not UNSET and _rel_input.create is not None:
+                        target_model = None
+                        target_data = None
+                        for field_name in _rel_input.create.__dataclass_fields__:
+                            value = getattr(_rel_input.create, field_name)
+                            if value is not None and value is not UNSET:
+                                target_model = _rel_input.create._model_mapping[field_name]  # noqa: SLF001
+                                target_data = value
+                                break
+
+                        if target_model is None:
+                            raise SDJExtrasError("oneOf input has no field set")
+
+                        target_ct = ContentType.objects.get_for_model(target_model)
+                        rel["before"].append({
+                            "operation": "create",
+                            "is_generic_fk_target": True,
+                            "target_ct": target_ct,
+                            "parent_ct_field": ct_field,
+                            "parent_fk_field": fk_field,
+                        })
+                        rabbit_hole(target_model, target_data, rel["before"][-1])
+
+                    if _rel_input.update is not UNSET and _rel_input.update is not None:
+                        if current_content_type is None:
+                            raise SDJExtrasError("Cannot update non-existing content_object")
+
+                        target_model = None
+                        target_data = None
+                        for field_name in _rel_input.update.__dataclass_fields__:
+                            value = getattr(_rel_input.update, field_name)
+                            if value is not None and value is not UNSET:
+                                target_model = _rel_input.update._model_mapping[field_name]  # noqa: SLF001
+                                target_data = value
+                                break
+
+                        if target_model is None:
+                            raise SDJExtrasError("oneOf input has no field set")
+
+                        expected_ct = ContentType.objects.get_for_model(target_model)
+                        if current_content_type != expected_ct:
+                            raise SDJExtrasError(
+                                f"Update target type mismatch: current is {current_content_type.model}, "
+                                f"update specifies {expected_ct.model}"
+                            )
+
+                        target_data.id = current_object_id  # pyright: ignore[reportOptionalMemberAccess]
+                        rel["before"].append({
+                            "operation": "update",
+                            "pk": current_object_id,
+                            "data_id": key,
+                        })
+                        rabbit_hole(target_model, target_data, rel["before"][-1])
+
+                else:
+                    raise SDJExtrasError(
+                        f"GenericForeignKey field '{key}' requires "
+                        f"CRUDOneToManyCreateInput or CRUDOneToManyUpdateInput"
+                    )
+
+            elif isinstance(val, GenericRelation):
+                _rel_input = _input.__dict__.get(key)  # noqa: RUF052
+                ct_field_name = val.content_type_field_name
+                fk_field_name = val.object_id_field_name
+                related_model = val.related_model
+
+                is_one_to_one = False
+                for constraint in related_model._meta.unique_together:  # noqa: SLF001
+                    if set(constraint) == {ct_field_name, fk_field_name}:
+                        is_one_to_one = True
+                        break
+
+                if not is_one_to_one:
+                    for constraint in related_model._meta.constraints:  # noqa: SLF001
+                        if isinstance(constraint, models.UniqueConstraint):  # noqa: SIM102
+                            if set(constraint.fields) == {ct_field_name, fk_field_name}:
+                                is_one_to_one = True
+                                break
+
+                if is_one_to_one:
+                    if isinstance(_rel_input, CRUDOneToOneCreateInput):
+                        if _rel_input.create is UNSET and _rel_input.assign is UNSET:
+                            raise SDJExtrasError("Must create or assign")
+                        if _rel_input.create is not UNSET and _rel_input.assign is not UNSET:
+                            raise SDJExtrasError("Cannot create and assign at the same time")
+
+                        if _rel_input.create is not UNSET:
+                            rel["after"].append({
+                                "operation": "create",
+                                "is_generic_relation": True,
+                                "fk_field_name": fk_field_name,
+                                "data_id": key,
+                                "rel_data_id": fk_field_name,
+                            })
+                            rabbit_hole(related_model, _rel_input.create, rel["after"][-1])
+
+                            content_type = ContentType.objects.get_for_model(model)
+                            rel["after"][-1].get("data").update({ct_field_name: content_type})
+
+                        if _rel_input.assign is not UNSET:
+                            if _rel_input.assign is None:
+                                raise SDJExtrasError("assign cannot be null")
+                            rel["generic_assignments"] = rel.get("generic_assignments", [])
+                            rel["generic_assignments"].append({
+                                "model": related_model,
+                                "pk": int(_rel_input.assign),
+                                "ct_field_name": ct_field_name,
+                                "fk_field_name": fk_field_name,
+                            })
+
+                    elif isinstance(_rel_input, CRUDOneToOneUpdateInput):
+                        parent_instance = model.objects.get(pk=int(_input.id))
+                        parent_ct = ContentType.objects.get_for_model(model)
+                        try:
+                            existing_instance = getattr(parent_instance, key)
+                        except related_model.DoesNotExist:
+                            existing_instance = None
+
+                        if _rel_input.create is not UNSET and _rel_input.assign is not UNSET:
+                            raise SDJExtrasError("Cannot create and assign at the same time")
+                        if _rel_input.update is not UNSET and (
+                            _rel_input.assign is not UNSET or _rel_input.create is not UNSET
+                        ):
+                            raise SDJExtrasError("Updating is only supported without create/assign")
+
+                        if _rel_input.assign is not UNSET:
+                            if _rel_input.assign is None:
+                                if existing_instance is not None:
+                                    rel["generic_removals"] = rel.get("generic_removals", [])
+                                    rel["generic_removals"].append({
+                                        "model": related_model,
+                                        "pks": [existing_instance.pk],
+                                        "parent_ct": parent_ct,
+                                        "ct_field_name": ct_field_name,
+                                        "fk_field_name": fk_field_name,
+                                    })
+                            else:
+                                if existing_instance is not None and _rel_input.delete is not True:
+                                    rel["generic_removals"] = rel.get("generic_removals", [])
+                                    rel["generic_removals"].append({
+                                        "model": related_model,
+                                        "pks": [existing_instance.pk],
+                                        "parent_ct": parent_ct,
+                                        "ct_field_name": ct_field_name,
+                                        "fk_field_name": fk_field_name,
+                                    })
+
+                                rel["generic_assignments"] = rel.get("generic_assignments", [])
+                                rel["generic_assignments"].append({
+                                    "model": related_model,
+                                    "pk": int(_rel_input.assign),
+                                    "parent_ct": parent_ct,
+                                    "ct_field_name": ct_field_name,
+                                    "fk_field_name": fk_field_name,
+                                })
+
+                        if _rel_input.create is not UNSET:
+                            if existing_instance is not None and _rel_input.delete is not True:
+                                raise SDJExtrasError(
+                                    f"There is already a {key} assigned. Maybe specify delete to replace?"
+                                )
+
+                            if existing_instance is not None and _rel_input.delete is True:
+                                rel["deletions"].append({
+                                    "model": related_model,
+                                    "pks": [existing_instance.pk],
+                                })
+
+                            rel["after"].append({
+                                "operation": "create",
+                                "is_generic_relation": True,
+                                "fk_field_name": fk_field_name,
+                                "data_id": key,
+                                "rel_data_id": fk_field_name,
+                            })
+                            rabbit_hole(related_model, _rel_input.create, rel["after"][-1])
+
+                            content_type = ContentType.objects.get_for_model(model)
+                            rel["after"][-1].get("data").update({
+                                ct_field_name: content_type,
+                                fk_field_name: int(_input.id),
+                            })
+
+                        if _rel_input.update is not UNSET:
+                            if existing_instance is None:
+                                raise SDJExtrasError("Cannot update non-existing object")
+
+                            _rel_input.update.id = existing_instance.pk  # pyright: ignore[reportOptionalMemberAccess]
+                            rel["after"].append({
+                                "operation": "update",
+                                "pk": existing_instance.pk,
+                                "data_id": key,
+                                "rel_data_id": fk_field_name,
+                            })
+                            rabbit_hole(related_model, _rel_input.update, rel["after"][-1])
+
+                        if _rel_input.delete is True and existing_instance is not None:
+                            rel["deletions"].append({
+                                "model": related_model,
+                                "pks": [existing_instance.pk],
+                            })
+
+                    else:
+                        raise SDJExtrasError(
+                            f"GenericRelation field '{key}' with unique_together requires "
+                            f"CRUDOneToOneCreateInput or CRUDOneToOneUpdateInput"
+                        )
+
+                # ManyToOne semantics (no constraint)
+                # CREATE
+                elif isinstance(_rel_input, CRUDManyToOneCreateInput):
+                    if _rel_input.create is UNSET and _rel_input.assign is UNSET:
+                        raise SDJExtrasError("Must create or assign or both")
+
+                    parent_ct = ContentType.objects.get_for_model(model)
+
+                    if _rel_input.create is not UNSET:
+                        if _rel_input.create is None:
+                            raise SDJExtrasError("create cannot be null")
+                        for item in _rel_input.create:
+                            rel["after"].append({
+                                "operation": "create",
+                                "is_generic_relation": True,
+                                "fk_field_name": fk_field_name,
+                                "data_id": key,
+                                "rel_data_id": fk_field_name,
+                            })
+                            rabbit_hole(related_model, item, rel["after"][-1])
+
+                            rel["after"][-1].get("data").update({ct_field_name: parent_ct})
+
+                    if _rel_input.assign is not UNSET:
+                        if _rel_input.assign is None:
+                            raise SDJExtrasError("assign cannot be null")
+                        rel["generic_assignments"] = rel.get("generic_assignments", [])
+                        rel["generic_assignments"].append({
+                            "model": related_model,
+                            "pks": [int(pk) for pk in _rel_input.assign],
+                            "parent_ct": parent_ct,
+                            "ct_field_name": ct_field_name,
+                            "fk_field_name": fk_field_name,
+                        })
+
+                # UPDATE
+                elif isinstance(_rel_input, CRUDManyToOneUpdateInput):
+                    parent_instance = model.objects.get(pk=int(_input.id))
+                    parent_ct = ContentType.objects.get_for_model(model)
+                    manager = getattr(parent_instance, key)
+
+                    if _rel_input.create is not UNSET:
+                        if _rel_input.create is None:
+                            raise SDJExtrasError("create cannot be null")
+                        for item in _rel_input.create:
+                            rel["after"].append({
+                                "operation": "create",
+                                "is_generic_relation": True,
+                                "fk_field_name": fk_field_name,
+                                "data_id": key,
+                                "rel_data_id": fk_field_name,
+                            })
+                            rabbit_hole(related_model, item, rel["after"][-1])
+
+                            rel["after"][-1].get("data").update({
+                                ct_field_name: parent_ct,
+                                fk_field_name: int(_input.id),
+                            })
+
+                    if _rel_input.assign is not UNSET:
+                        if _rel_input.assign is None:
+                            raise SDJExtrasError("assign cannot be null")
+                        rel["generic_assignments"] = rel.get("generic_assignments", [])
+                        rel["generic_assignments"].append({
+                            "model": related_model,
+                            "pks": [int(pk) for pk in _rel_input.assign],
+                            "parent_ct": parent_ct,
+                            "ct_field_name": ct_field_name,
+                            "fk_field_name": fk_field_name,
+                        })
+
+                    if _rel_input.update is not UNSET:
+                        if _rel_input.update is None:
+                            raise SDJExtrasError("update cannot be null")
+                        for item in _rel_input.update:
+                            rel["after"].append({
+                                "operation": "update",
+                                "pk": item.id,
+                                "manager": manager,
+                                "data_id": key,
+                                "rel_data_id": fk_field_name,
+                            })
+                            rabbit_hole(related_model, item, rel["after"][-1])
+
+                    if _rel_input.remove is not UNSET:
+                        if _rel_input.remove is None:
+                            raise SDJExtrasError("remove cannot be null")
+                        del_pks = [
+                            int(item.id) for item in _rel_input.remove if item.delete is True
+                        ]
+                        rem_pks = [
+                            int(item.id) for item in _rel_input.remove if item.delete is not True
+                        ]
+
+                        if len(del_pks) > 0:
+                            rel["deletions"].append({
+                                "model": related_model,
+                                "pks": del_pks,
+                            })
+
+                        if len(rem_pks) > 0:
+                            rel["generic_removals"] = rel.get("generic_removals", [])
+                            rel["generic_removals"].append({
+                                "model": related_model,
+                                "pks": rem_pks,
+                                "parent_ct": parent_ct,
+                                "ct_field_name": ct_field_name,
+                                "fk_field_name": fk_field_name,
+                            })
+
+                else:
+                    raise SDJExtrasError(
+                        f"GenericRelation field '{key}' requires "
+                        f"CRUDManyToOneCreateInput or CRUDManyToOneUpdateInput"
+                    )
+
+            elif isinstance(val, (OneToOneField, OneToOneRel)):
                 _rel_input = _input.__dict__.get(key)  # noqa: RUF052
                 when = "after" if isinstance(val, OneToOneRel) else "before"
                 if isinstance(_rel_input, CRUDOneToOneCreateInput):
@@ -389,7 +852,7 @@ def rabbit_hole(model, _input, rel, through_defaults=None):  # noqa: PLR0912, PL
                                 },
                             )
 
-            if isinstance(val, ForeignKey):
+            elif isinstance(val, ForeignKey):
                 _rel_input = _input.__dict__.get(key)  # noqa: RUF052
                 if isinstance(_rel_input, CRUDOneToManyCreateInput):
                     if _rel_input.create is not UNSET and _rel_input.assign is not UNSET:

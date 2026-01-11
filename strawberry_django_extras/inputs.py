@@ -5,6 +5,7 @@ from strawberry import ID, UNSET
 from strawberry.scalars import JSON
 
 T_CREATE = TypeVar("T_CREATE")
+T_ASSIGN = TypeVar("T_ASSIGN")
 T_UPDATE = TypeVar("T_UPDATE")
 
 
@@ -72,9 +73,9 @@ class CRUDManyToOneCreateInput(CRUDInput, Generic[T_CREATE]):
     name="__One2ManyCreateInput",
     description="Used for OneToMany relationships when creating an object. Allows to either create nested objects or assign existing objects to the newly created object.",
 )
-class CRUDOneToManyCreateInput(CRUDInput, Generic[T_CREATE]):
+class CRUDOneToManyCreateInput(CRUDInput, Generic[T_CREATE, T_ASSIGN]):
     create: T_CREATE | None = UNSET
-    assign: ID | None = UNSET
+    assign: T_ASSIGN | None = UNSET
 
 
 @strawberry.input(
@@ -104,9 +105,9 @@ class CRUDOneToOneUpdateInput(CRUDInput, Generic[T_CREATE, T_UPDATE]):
     name="__One2ManyUpdateInput",
     description="Used for OneToMany relationships when updating an object. Supports nested creation, assignment to object or null if the field is nullable, updates to the data of existing related objects and an optional delete flag to delete the previously assigned object in case of reassignment.",
 )
-class CRUDOneToManyUpdateInput(CRUDInput, Generic[T_CREATE, T_UPDATE]):
+class CRUDOneToManyUpdateInput(CRUDInput, Generic[T_CREATE, T_ASSIGN, T_UPDATE]):
     create: T_CREATE | None = UNSET
-    assign: ID | None = UNSET
+    assign: T_ASSIGN | None = UNSET
     update: T_UPDATE | None = UNSET
     delete: bool | None = False
 
